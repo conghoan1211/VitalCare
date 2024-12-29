@@ -1,0 +1,14 @@
+# Ignore Visual Studio files
+.vs/
+
+# Ignore build output directories
+bin/
+obj/
+
+# Ignore Debug folders
+Debug/
+Release/
+
+
+/appsettings.json
+.env
