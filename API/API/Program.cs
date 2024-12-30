@@ -1,7 +1,6 @@
 ﻿using API.Configurations;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -29,8 +28,13 @@ builder.Services.AddSession(options =>
 });
 
 // Add JWT Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-.AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;  
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>  // JWT Bearer
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -41,14 +45,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidIssuer = ConfigManager.gI().Issuer,
         ValidAudience = ConfigManager.gI().Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigManager.gI().SecretKey)),
-        ClockSkew = TimeSpan.Zero // Loại bỏ độ lệch thời gian mặc định
+        ClockSkew = TimeSpan.Zero
     };
 
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
-            // Lấy token từ cookie
             var token = context.Request.Cookies["JwtToken"];
             if (!string.IsNullOrEmpty(token))
             {
@@ -58,28 +61,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         },
         OnChallenge = async context =>
         {
-            context.HttpContext.Response.Cookies.Delete("JwtToken"); // Xóa cookie khi token hết hạn
+            context.HttpContext.Response.Cookies.Delete("JwtToken");
+            context.Response.Redirect("/explore"); // login
             context.HandleResponse();
-            context.Response.Redirect("/login");
             await Task.CompletedTask;
         }
     };
-});
-
-// Add Google Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
 })
-.AddCookie()
-.AddGoogle(options =>
+.AddGoogle(googleOptions =>  // Google OAuth
 {
-    options.ClientId = ConfigManager.gI().GoogleClientIp;
-    options.ClientSecret = ConfigManager.gI().GoogleClientSecert;
-    options.CallbackPath  = new PathString("/google-login");
-    options.SaveTokens = true; // Lưu tokens để sử dụng sau
+    googleOptions.ClientId = ConfigManager.gI().GoogleClientIp;
+    googleOptions.ClientSecret = ConfigManager.gI().GoogleClientSecert;
+    googleOptions.CallbackPath = new PathString(ConfigManager.gI().GoogleRedirectUri); 
+    googleOptions.SaveTokens = true;
 });
 
 
@@ -89,31 +83,27 @@ builder.Services.AddCors(options =>
         builder =>
         {
             builder
-                .AllowAnyOrigin()
+                .WithOrigins("http://localhost:3000") // Replace with your frontend URL
                 .AllowAnyMethod()
-                .AllowAnyHeader();
+                .AllowAnyHeader()
+                .AllowCredentials()
+                .WithExposedHeaders("Set-Cookie");  // Thêm dòng này
+
         });
 });
+
 
 var app = builder.Build();
 app.UseSession();
 app.UseCors("AllowAll");
 app.UseStaticFiles();
 
-//app.Use(async (context, next) =>
-//{
-//    context.Response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin");
-//    context.Response.Headers.Add("Cross-Origin-Embedder-Policy", "require-corp");
-//    await next();
-//});        // 
-
-// run on develope environment
 app.Use(async (context, next) =>
 {
-    context.Response.Headers.Remove("Cross-Origin-Opener-Policy");
+    context.Response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin");
+    context.Response.Headers.Add("Cross-Origin-Embedder-Policy", "require-corp");
     await next();
 });
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -123,6 +113,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();

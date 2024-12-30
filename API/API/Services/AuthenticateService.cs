@@ -118,15 +118,15 @@ namespace API.Services
         public async Task<(string, LoginGoogleResult)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext)
         {
             bool hasPassword = true;
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == input.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.GoogleId == input.Id || x.Email == input.Email );
             if (user == null)
             {
                 var userid = Guid.NewGuid().ToString();
-
                 user = new User
                 {
                     UserId = userid,
-                    Username = input.Nickname ?? $"user_{userid.Substring(0, 8)}",
+                    GoogleId = input.Id,
+                    Username = input.Name ?? $"user_{userid.Substring(0, 8)}",
                     Phone = input.PhoneNumber,
                     Email = input.Email,
                     Password = null,
@@ -134,17 +134,25 @@ namespace API.Services
                     Status = (int)UserStatus.Inactive,
                     IsActive = true,
                     IsDisable = false,
-                    IsVerified = true,
+                    IsVerified = input.VerifiedEmail,
                     CreateAt = DateTime.Now,
                     CreateUser = userid,
                     Bio= input.ProfileLink,
-                    Avatar = "default-avatar.png",
+                    Avatar = input.Picture ?? "default-avatar.png",
                 };
                 await _context.Users.AddAsync(user);
-                await _context.SaveChangesAsync();
                 hasPassword = false;
             }
-            hasPassword = !string.IsNullOrEmpty(user.Password);
+            else
+            {
+                user.Avatar = input.Picture ?? user.Avatar;
+                user.Username = input.Name ?? user.Username;
+               // user.LastLoginAt = DateTime.Now;
+                hasPassword = !string.IsNullOrEmpty(user.Password);
+                _context.Users.Update(user);
+            }
+            await _context.SaveChangesAsync();
+
             if (user.IsActive == false)
             {
                 return ("Tài khoản đã bị vô hiệu hóa.", null);

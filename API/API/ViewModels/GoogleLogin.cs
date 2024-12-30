@@ -1,12 +1,13 @@
 ﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace API.ViewModels
 {
-    // Models
     public class GoogleAuthRequest
     {
-        public string? Code { get; set; }
+        [Required]
+        public string? Credential { get; set; }
     }
 
     public class AuthTokenResponse
@@ -79,7 +80,6 @@ namespace API.ViewModels
         public string TimeZone { get; set; }
         public string PhoneNumber { get; set; }
         public string Address { get; set; }
-        public string Nickname { get; set; }
         public string OccupationName { get; set; }
         public string OrganizationName { get; set; }
         public string AgeRange { get; set; }

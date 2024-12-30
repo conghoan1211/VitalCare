@@ -2,14 +2,19 @@
 using API.Services;
 using API.Utilities;
 using API.ViewModels;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 
 namespace API.Controllers
 {
+    [Route("api/auth")]
+    [ApiController]
     public class AuthenController : Controller
     {
         private readonly IAuthenticateService _iAuthenticate;
@@ -20,22 +25,52 @@ namespace API.Controllers
             _httpContextAccessor = httpContextAccessor;
         }
 
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromBody] UserLogin input)
-        {
-            var (msg, data) = await _iAuthenticate.DoLogin(input, _httpContextAccessor.HttpContext);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok(data);
-        }
 
-        [HttpPost("google-login")]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleAuthRequest request)
+        [HttpPost("google-callback1")]
+        public async Task<IActionResult> GoogleCallback1([FromBody] GoogleAuthRequest request)
         {
             try
             {
-                var tokenResponse = await GoogleAuthentication.GetAuthAccessTokenAsync(request.Code, _httpContextAccessor.HttpContext);
+                // Verify ID token
+                var settings = new GoogleJsonWebSignature.ValidationSettings()
+                {
+                    Audience = new[] { ConfigManager.gI().GoogleClientIp }
+                };
+                var payload = await GoogleJsonWebSignature.ValidateAsync(request.Credential, settings);
+
+                var userInfo = new GoogleUserInfo
+                {
+                    Email = payload.Email,
+                    Name = payload.Name,
+                    Picture = payload.Picture,
+                    Id = payload.Subject,
+                    VerifiedEmail = payload.EmailVerified,
+                };
+
+                var (msg, data) = await _iAuthenticate.LoginByGoogle(userInfo, _httpContextAccessor.HttpContext);
+                if (!string.IsNullOrEmpty(msg))
+                    return BadRequest(new { Message = msg });
+
+                return Ok(new
+                {
+                    Message = "Login successful",
+                    Data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = ex.Message });
+            }
+        }
+
+        [HttpPost("google-callback")]
+        public async Task<IActionResult> GoogleCallback([FromBody] GoogleAuthRequest request)
+        {
+            try
+            {
+                var tokenResponse = await GoogleAuthentication.GetAuthAccessTokenAsync(request.Credential, _httpContextAccessor.HttpContext);
                 var userInfo = await GoogleAuthentication.GetUserInfoAsync(tokenResponse.AccessToken);
-                var(msg, data) = await _iAuthenticate.LoginByGoogle(userInfo, _httpContextAccessor.HttpContext);
+                var (msg, data) = await _iAuthenticate.LoginByGoogle(userInfo, _httpContextAccessor.HttpContext);
                 if (msg.Length > 0) { return BadRequest(msg); }
 
                 return Ok(new
@@ -46,53 +81,16 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                // Log lỗi chi tiết
-                Console.WriteLine($">>>>>>> Error: {ex.Message} - StackTrace: {ex.StackTrace}");
-                return StatusCode(500, new { ex.Message });
+                return StatusCode(500, new {ex.Message, ex.StackTrace});
             }
         }
 
-
-        // POST: AuthenController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromBody] UserLogin input)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: AuthenController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: AuthenController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: AuthenController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
+            var (msg, data) = await _iAuthenticate.DoLogin(input, _httpContextAccessor.HttpContext);
+            if (msg.Length > 0) return BadRequest(msg);
+            return Ok(data);
         }
 
         // POST: AuthenController/Delete/5

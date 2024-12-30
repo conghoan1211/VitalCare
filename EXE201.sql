@@ -81,6 +81,6 @@ WHERE object_id = OBJECT_ID('User');
 
 
 
--- add user  LastLogin, 
+-- add user  LastLogin, user.LastLoginIP = httpContext.Connection.RemoteIpAddress?.ToString();
 
 select * from [User]

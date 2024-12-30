@@ -16,7 +16,7 @@ namespace API.Utilities
 
         private const string UserInfoUrl = "https://www.googleapis.com/oauth2/v1/userinfo";
 
-        private const string TokenUrl = "https://www.googleapis.com/oauth2/v4/token";
+        private const string TokenUrl = "https://oauth2.googleapis.com/token";
         #endregion
 
         private static string RedirectUrl = ConfigManager.gI().GoogleRedirectUri;
@@ -26,7 +26,7 @@ namespace API.Utilities
         public static string GetRedirectUri(HttpContext httpContext)
         {
             var request = httpContext.Request;
-            return $"{request.Scheme}://{request.Host}/google-login";
+            return $"{request.Scheme}://{request.Host}{RedirectUrl}";
         }
 
         public static async Task<AuthTokenResponse> GetAuthAccessTokenAsync(string? code, HttpContext httpContext)
@@ -44,7 +44,7 @@ namespace API.Utilities
                     throw new InvalidOperationException("Redirect URI is missing!");
 
                 var redirectUri = GetRedirectUri(httpContext);
-
+                Console.WriteLine($"Redirect URI: {redirectUri}");
                 Dictionary<string, string> parameters = new()
                 {
                     ["grant_type"] = "authorization_code",
@@ -82,8 +82,6 @@ namespace API.Utilities
                 throw;
             }
         }
-
-
 
         public static async Task<GoogleUserInfo> GetUserInfoAsync(string? accessToken)
         {

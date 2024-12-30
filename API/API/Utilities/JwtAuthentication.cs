@@ -23,12 +23,13 @@ namespace InstagramClone.Utilities
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim("Username", user.Username),
-                    new Claim("UserID", user.UserId.ToString()),
-                    new Claim("Phone", user.Phone.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.RoleId == (int)Role.Admin ? "Admin" : "User"), // RoleID = 1 là Admin
-                    new Claim("Avatar", user.Avatar == null ? "" : user.Avatar),
+                    new Claim("Username", user.Username ?? ""),
+                    new Claim("UserID", user.UserId.ToString() ?? ""),
+                    new Claim("Phone", user.Phone?.ToString() ?? ""),
+                    new Claim(ClaimTypes.Email, user.Email ?? ""),
+                    new Claim(ClaimTypes.Role, user.RoleId == (int)Role.Admin ? "Admin" : "User"),
+                    new Claim("Avatar", user.Avatar ?? "")
+
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(ConfigManager.gI().ExpiresInMinutes), // Token expiration
                 Issuer = ConfigManager.gI().Issuer,
