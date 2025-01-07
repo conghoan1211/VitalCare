@@ -3,13 +3,8 @@ using API.Services;
 using API.Utilities;
 using API.ViewModels;
 using Google.Apis.Auth;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Security.Claims;
 
 namespace API.Controllers
 {
@@ -19,10 +14,13 @@ namespace API.Controllers
     {
         private readonly IAuthenticateService _iAuthenticate;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public AuthenController(IAuthenticateService iAuthenticate, IHttpContextAccessor httpContextAccessor)
+        private readonly HttpClient _httpClient;
+
+        public AuthenController(IAuthenticateService iAuthenticate, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory)
         {
             _iAuthenticate = iAuthenticate;
             _httpContextAccessor = httpContextAccessor;
+            _httpClient = httpClientFactory.CreateClient();
         }
 
 
@@ -93,19 +91,44 @@ namespace API.Controllers
             return Ok(data);
         }
 
-        // POST: AuthenController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+
+        [HttpPost("facebook-login")]
+        public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginRequest request)
         {
-            try
+            var verifyTokenUrl = $"https://graph.facebook.com/me?access_token={request.AccessToken}&fields=id,name,email";
+
+            var response = await _httpClient.GetAsync(verifyTokenUrl);
+
+            if (!response.IsSuccessStatusCode)
             {
-                return RedirectToAction(nameof(Index));
+                return BadRequest(new { message = "Invalid Facebook token." });
             }
-            catch
+
+            var userData = await response.Content.ReadAsStringAsync();
+            var facebookUser = JsonConvert.DeserializeObject<FacebookUser>(userData);
+
+            // Tùy chỉnh thêm: lưu thông tin người dùng vào database, tạo JWT token, v.v.
+            return Ok(new
             {
-                return View();
-            }
+                facebookUser.Id,
+                facebookUser.Name,
+                facebookUser.Email
+            });
         }
+
+        // Request model
+        public class FacebookLoginRequest
+        {
+            public string AccessToken { get; set; }
+        }
+
+        // Response model từ Facebook
+        public class FacebookUser
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+            public string Email { get; set; }
+        }
+
     }
 }

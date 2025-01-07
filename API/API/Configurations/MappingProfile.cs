@@ -9,6 +9,8 @@ namespace API.Configurations
         public MappingProfile()
         {
             CreateMap<User, UserVM>();
+            CreateMap<User, ProfileVM>();
+
         }
     }
 }

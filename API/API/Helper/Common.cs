@@ -3,7 +3,7 @@ using API.Helper;
 using API.Models;
 using System.Text.RegularExpressions;
 
-namespace zaloclone_test.Helper
+namespace API.Helper
 {
     public static class Common
     {

@@ -17,7 +17,7 @@ namespace InstagramClone.Utilities
         public string GenerateJwtToken(User? user, HttpContext httpContext)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(ConfigManager.gI().SecretKey); // Use a strong secret key
+            var key = Encoding.UTF8.GetBytes(ConfigManager.gI().SecretKey);  
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -31,7 +31,7 @@ namespace InstagramClone.Utilities
                     new Claim("Avatar", user.Avatar ?? "")
 
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(ConfigManager.gI().ExpiresInMinutes), // Token expiration
+                Expires = DateTime.UtcNow.AddMinutes(ConfigManager.gI().ExpiresInMinutes),  
                 Issuer = ConfigManager.gI().Issuer,
                 Audience = ConfigManager.gI().Audience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

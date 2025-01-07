@@ -39,5 +39,11 @@ public partial class Post
 
     public string? UpdateUser { get; set; }
 
+    public string Title { get; set; } = null!;
+
+    public string Thumbnail { get; set; } = null!;
+
+    public int CategoryId { get; set; }
+
     public virtual User User { get; set; } = null!;
 }

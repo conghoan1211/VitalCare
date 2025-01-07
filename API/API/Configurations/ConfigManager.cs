@@ -21,6 +21,11 @@
         public string GoogleClientSecert{ get; set; }
         public string GoogleRedirectUri { get; set; }
 
+        // Facebook settings
+        public string FacebookAppId { get; set; }
+        public string FacebookAppSecret { get; set; }
+        public string FacebookRedirectUri { get; set; }
+
         public static ConfigManager gI()
         {
             return _instance;
@@ -53,6 +58,10 @@
                 GoogleClientIp = _configuration.GetSection("Google").GetSection("ClientId").Value;
                 GoogleClientSecert = _configuration.GetSection("Google").GetSection("ClientSecret").Value;
                 GoogleRedirectUri = _configuration.GetSection("Google").GetSection("RedirectUri").Value;
+
+                FacebookAppId = _configuration.GetSection("Facebook").GetSection("AppId").Value;
+                FacebookAppSecret = _configuration.GetSection("Facebook").GetSection("AppSecret").Value;
+                FacebookRedirectUri = _configuration.GetSection("Facebook").GetSection("RedirectUri").Value;
             }
             catch (Exception e)
             {

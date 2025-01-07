@@ -23,7 +23,10 @@ public partial class Exe201Context : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("server =localhost; database = exe201;uid=sa;pwd=hoancute;TrustServerCertificate=true");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>(entity =>
@@ -45,10 +48,12 @@ public partial class Exe201Context : DbContext
                 .IsUnicode(false)
                 .HasColumnName("PostID");
             entity.Property(e => e.Author).HasMaxLength(255);
-            entity.Property(e => e.Content).HasMaxLength(500);
+            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.CreateUser).HasMaxLength(36);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Tags).HasMaxLength(255);
+            entity.Property(e => e.Thumbnail).HasMaxLength(255);
+            entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.UpdateUser).HasMaxLength(36);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.UserId)
@@ -92,6 +97,8 @@ public partial class Exe201Context : DbContext
 
             entity.ToTable("User");
 
+            entity.HasIndex(e => new { e.Username, e.Email }, "IX_Users_Username_Email");
+
             entity.Property(e => e.UserId)
                 .HasMaxLength(36)
                 .IsUnicode(false)
@@ -106,6 +113,10 @@ public partial class Exe201Context : DbContext
             entity.Property(e => e.GoogleId)
                 .HasMaxLength(255)
                 .HasColumnName("GoogleID");
+            entity.Property(e => e.LastLogin).HasColumnType("datetime");
+            entity.Property(e => e.LastLoginIp)
+                .HasMaxLength(255)
+                .HasColumnName("LastLoginIP");
             entity.Property(e => e.Password).HasMaxLength(255);
             entity.Property(e => e.Phone).HasMaxLength(10);
             entity.Property(e => e.RoleId).HasColumnName("RoleID");

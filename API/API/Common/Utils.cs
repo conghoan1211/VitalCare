@@ -49,12 +49,11 @@ namespace API.Common
         public static bool IsObjectEqual<T1, T2>(this T1 obj1, T2 obj2)
         {
             if (obj1 == null || obj2 == null)
-                return obj1 == null && obj2 == null; // Nếu cả hai đều null, coi là bằng nhau
+                return obj1 == null && obj2 == null;
 
             var properties1 = typeof(T1).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var properties2 = typeof(T2).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-            // Tạo dictionary của properties từ obj2 để tra cứu nhanh
             var properties2Dict = properties2.ToDictionary(p => p.Name, p => p);
 
             foreach (var property1 in properties1)
@@ -62,18 +61,31 @@ namespace API.Common
                 if (!properties2Dict.TryGetValue(property1.Name, out var property2) ||
                     property1.PropertyType != property2.PropertyType)
                 {
-                    return false; // Nếu tên hoặc loại thuộc tính không khớp, coi như khác nhau
+                    return false;
                 }
 
                 var value1 = property1.GetValue(obj1);
                 var value2 = property2.GetValue(obj2);
 
-                if (!Equals(value1, value2))
+                // Nếu là collection, so sánh từng phần tử
+                if (value1 is IEnumerable<object> list1 && value2 is IEnumerable<object> list2)
                 {
-                    return false; // Nếu bất kỳ giá trị thuộc tính nào khác nhau, coi như khác nhau
+                    if (!list1.SequenceEqual(list2))
+                        return false;
+                }
+                // Nếu là object phức tạp, kiểm tra đệ quy
+                else if (property1.PropertyType.IsClass && !property1.PropertyType.IsPrimitive && !property1.PropertyType.IsValueType)
+                {
+                    if (!IsObjectEqual(value1, value2))
+                        return false;
+                }
+                // So sánh giá trị đơn giản
+                else if (!Equals(value1, value2))
+                {
+                    return false;
                 }
             }
-            return true; // Trả về true nếu không tìm thấy điểm khác biệt nào
+            return true;
         }
 
         public static string DowLoadFileFromUrl(string url, out MemoryStream memoryStream)

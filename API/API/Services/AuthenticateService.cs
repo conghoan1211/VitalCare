@@ -4,21 +4,14 @@ using API.Models;
 using API.Utilities;
 using API.ViewModels;
 using AutoMapper;
-using Google.Apis.Auth;
 using InstagramClone.Utilities;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Net.Http;
-using System.Security.Cryptography;
-using zaloclone_test.Helper;
 
 namespace API.Services
 {
     public interface IAuthenticateService
     {
-        public Task<(string, LoginGoogleResult)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext);
+        public Task<(string, LoginGoogleResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext);
 
         public Task<(string, LoginResult?)> DoLogin(UserLogin userLogin, HttpContext httpContext);
         public Task<string> DoRegister(UserRegister userRegister);
@@ -102,6 +95,8 @@ namespace API.Services
             if (user.IsActive == false) return ($"Tài khoản của bạn đã bị khóa đến ngày {user.BlockUntil}", null);
 
             user.Status = (int)UserStatus.Active;
+            user.LastLogin = DateTime.Now;
+            user.LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString();
             await _context.SaveChangesAsync();
 
             var token = _jwtAuthen.GenerateJwtToken(user, httpContext);
@@ -114,8 +109,7 @@ namespace API.Services
             });
         }
 
-
-        public async Task<(string, LoginGoogleResult)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext)
+        public async Task<(string, LoginGoogleResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext)
         {
             bool hasPassword = true;
             var user = await _context.Users.FirstOrDefaultAsync(x => x.GoogleId == input.Id || x.Email == input.Email );
@@ -137,17 +131,20 @@ namespace API.Services
                     IsVerified = input.VerifiedEmail,
                     CreateAt = DateTime.Now,
                     CreateUser = userid,
-                    Bio= input.ProfileLink,
+                    LastLogin = DateTime.Now,
+                    Bio = input.ProfileLink,
                     Avatar = input.Picture ?? "default-avatar.png",
                 };
                 await _context.Users.AddAsync(user);
                 hasPassword = false;
             }
-            else
+            else                                              // improve this 
             {
-                user.Avatar = input.Picture ?? user.Avatar;
+                user.Avatar = input.Picture ?? user.Avatar;           
                 user.Username = input.Name ?? user.Username;
-               // user.LastLoginAt = DateTime.Now;
+                user.LastLogin = DateTime.Now;
+                user.LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString();
+                user.GoogleId = input.Id;  ///////
                 hasPassword = !string.IsNullOrEmpty(user.Password);
                 _context.Users.Update(user);
             }
@@ -168,7 +165,6 @@ namespace API.Services
                 User = userDto
             });
         }
-
         public async Task<string> DoLogout(HttpContext httpContext, string? phone)
         {
             var (msg, user) = await DoSearchByPhone(phone);

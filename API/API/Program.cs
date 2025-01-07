@@ -1,6 +1,7 @@
 ﻿using API.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -62,7 +63,7 @@ builder.Services.AddAuthentication(options =>
         OnChallenge = async context =>
         {
             context.HttpContext.Response.Cookies.Delete("JwtToken");
-            context.Response.Redirect("/explore"); // login
+            context.Response.Redirect("/login");  
             context.HandleResponse();
             await Task.CompletedTask;
         }
@@ -74,6 +75,12 @@ builder.Services.AddAuthentication(options =>
     googleOptions.ClientSecret = ConfigManager.gI().GoogleClientSecert;
     googleOptions.CallbackPath = new PathString(ConfigManager.gI().GoogleRedirectUri); 
     googleOptions.SaveTokens = true;
+}).AddFacebook(facebookOptions =>  // Facebook OAuth
+{
+    facebookOptions.AppId = ConfigManager.gI().FacebookAppId;
+    facebookOptions.AppSecret = ConfigManager.gI().FacebookAppSecret;
+    facebookOptions.CallbackPath = new PathString(ConfigManager.gI().FacebookRedirectUri);
+    facebookOptions.SaveTokens = true;
 });
 
 
@@ -87,23 +94,36 @@ builder.Services.AddCors(options =>
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials()
-                .WithExposedHeaders("Set-Cookie");  // Thêm dòng này
+                .WithExposedHeaders("Set-Cookie");   
 
         });
 });
 
+// Đảm bảo rằng cookie không bị chặn trong ứng dụng hoặc trình duyệt
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.CheckConsentNeeded = context => false;
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+
+});
+
+builder.Services.AddLogging(builder =>
+{
+    builder.AddConsole();
+    builder.AddDebug();
+});
 
 var app = builder.Build();
 app.UseSession();
 app.UseCors("AllowAll");
 app.UseStaticFiles();
 
-app.Use(async (context, next) =>
-{
-    context.Response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin");
-    context.Response.Headers.Add("Cross-Origin-Embedder-Policy", "require-corp");
-    await next();
-});
+//app.Use(async (context, next) =>
+//{
+//    context.Response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin");
+//    context.Response.Headers.Add("Cross-Origin-Embedder-Policy", "require-corp");
+//    await next();
+//});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

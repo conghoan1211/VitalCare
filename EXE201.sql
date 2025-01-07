@@ -21,13 +21,18 @@ CREATE TABLE [User](
 	[CreateUser] [nvarchar](36) NULL,
 	[UpdateUser] [nvarchar](36) NULL,
 	[Status] [int] NULL,                -- status online
+	[LastLogin] [datetime] NULL,
 	[BlockUntil] [datetime] NULL,
+	[LastLoginIP] [nvarchar](255) NULL,
 )
 
 CREATE TABLE [Posts](
 	[PostID] [varchar](36) primary key NOT NULL ,
 	[UserID] [varchar](36) NOT NULL,
-	[Content] [nvarchar](500) NULL,
+	[CategoryID] INT NOT NULL, 
+	[Content] [nvarchar](MAX) NULL,
+	[Title] [nvarchar](255) NOT NULL,
+	[Thumbnail] [nvarchar](255) NOT NULL,
 	[VideoUrl] [nvarchar](255) NULL,
 	[Privacy] [int] NULL,
 	[Tags] [nvarchar](255) NULL,
@@ -46,7 +51,7 @@ CREATE TABLE [Posts](
 )
 
 CREATE TABLE Category (
-    [ID] INT PRIMARY KEY IDENTITY(1,1),
+    [ID] INT PRIMARY KEY IDENTITY(1,1),s
     [Name] NVARCHAR(255),
 	[TypeObject] INT NOT NULL,
 	[IsActive] BIT NULL,
@@ -56,7 +61,8 @@ CREATE TABLE Category (
 CREATE TABLE Product (
 	[ProductID] VARCHAR(36) PRIMARY KEY,
     [Title] NVARCHAR(255) NOT NULL,
-    [Price] int NULL,
+    [CurrentPrice] INT NOT NULL,
+    [NewPrice] INT NOT NULL,
     [ImageUrl] NVARCHAR(500) NULL,
     [ProductUrl] NVARCHAR(500) NOT NULL,
     [Description] NVARCHAR(MAX) NULL,
@@ -84,3 +90,10 @@ WHERE object_id = OBJECT_ID('User');
 -- add user  LastLogin, user.LastLoginIP = httpContext.Connection.RemoteIpAddress?.ToString();
 
 select * from [User]
+
+
+alter table [user]
+add LastLoginIP NVARCHAR(255) NULL
+
+ALTER TABLE product
+add NewPrice int  NULL

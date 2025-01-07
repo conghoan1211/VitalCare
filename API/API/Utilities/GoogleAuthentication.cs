@@ -7,7 +7,7 @@ using System.Net.Http.Headers;
 
 namespace API.Utilities
 {
-    public class GoogleAuthentication
+    public static class GoogleAuthentication
     {
         #region Các thuộc tính mặc định
         private const string AuthUrl = "https://accounts.google.com/o/oauth2/auth";
@@ -54,26 +54,38 @@ namespace API.Utilities
                     ["redirect_uri"] = redirectUri
                 };
 
-                using var httpClient = new HttpClient();
-                var content = new FormUrlEncodedContent(parameters);
-
-                // Log request details
-                Console.WriteLine($">>>>>>>> Request URL: {TokenUrl}");
-                Console.WriteLine($">>>>>>>> Request Parameters: {JsonConvert.SerializeObject(parameters)}");
-
-                var response = await httpClient.PostAsync(TokenUrl, content);
-                var responseContent = await response.Content.ReadAsStringAsync();
-
-                // Log response
-                Console.WriteLine($">>>>>>>> Response Status: {response.StatusCode}");
-                Console.WriteLine($">>>>>>>> Response Content: {responseContent}");
-
-                if (!response.IsSuccessStatusCode)
+                HttpRequestMessage req = new(HttpMethod.Post, TokenUrl)
                 {
-                    throw new Exception($"Token request failed: {response.StatusCode} - {responseContent}");
+                    Content = new FormUrlEncodedContent(parameters)
+                };
+                HttpClient client = new();
+                HttpResponseMessage res = await client.SendAsync(req);
+                if (HttpStatusCode.OK != res.StatusCode)
+                {
+                    throw new Exception($"Failed to get access token res: {res.ReasonPhrase}");
                 }
 
-                return AuthTokenResponse.FromJSON(responseContent);
+                return AuthTokenResponse.FromJSON(await res.Content.ReadAsStringAsync());
+                //using var httpClient = new HttpClient();
+                //var content = new FormUrlEncodedContent(parameters);
+
+                //// Log request details
+                //Console.WriteLine($">>>>>>>> Request URL: {TokenUrl}");
+                //Console.WriteLine($">>>>>>>> Request Parameters: {JsonConvert.SerializeObject(parameters)}");
+
+                //var response = await httpClient.PostAsync(TokenUrl, content);
+                //var responseContent = await response.Content.ReadAsStringAsync();
+
+                //// Log response
+                //Console.WriteLine($">>>>>>>> Response Status: {response.StatusCode}");
+                //Console.WriteLine($">>>>>>>> Response Content: {responseContent}");
+
+                //if (!response.IsSuccessStatusCode)
+                //{
+                //    throw new Exception($"Token request failed: {response.StatusCode} - {responseContent}");
+                //}
+
+                //return AuthTokenResponse.FromJSON(responseContent);
             }
             catch (Exception ex)
             {

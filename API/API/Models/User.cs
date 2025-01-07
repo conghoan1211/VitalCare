@@ -45,5 +45,9 @@ public partial class User
 
     public DateTime? BlockUntil { get; set; }
 
+    public DateTime? LastLogin { get; set; }
+
+    public string? LastLoginIp { get; set; }
+
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
 }
