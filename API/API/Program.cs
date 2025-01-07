@@ -1,7 +1,6 @@
-﻿using API.Configurations;
+﻿using Amazon.S3;
+using API.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OAuth;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -18,7 +17,6 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(Program));
-
 
 // Add session 
 builder.Services.AddSession(options =>
@@ -82,7 +80,6 @@ builder.Services.AddAuthentication(options =>
     facebookOptions.CallbackPath = new PathString(ConfigManager.gI().FacebookRedirectUri);
     facebookOptions.SaveTokens = true;
 });
-
 
 builder.Services.AddCors(options =>
 {

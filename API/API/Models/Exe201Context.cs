@@ -17,6 +17,10 @@ public partial class Exe201Context : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<Comment> Comments { get; set; }
+
+    public virtual DbSet<Like> Likes { get; set; }
+
     public virtual DbSet<Post> Posts { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
@@ -37,6 +41,63 @@ public partial class Exe201Context : DbContext
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Name).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<Comment>(entity =>
+        {
+            entity.HasNoKey();
+
+            entity.Property(e => e.CommentId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("CommentID");
+            entity.Property(e => e.Content).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.EntityId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("EntityID");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("UserID");
+
+            entity.HasOne(d => d.Entity).WithMany()
+                .HasForeignKey(d => d.EntityId)
+                .HasConstraintName("FK__Comments__Entity__403A8C7D");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Comments__UserID__398D8EEE");
+        });
+
+        modelBuilder.Entity<Like>(entity =>
+        {
+            entity.HasNoKey();
+
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.EntityId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("EntityID");
+            entity.Property(e => e.LikeId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("LikeID");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("UserID");
+
+            entity.HasOne(d => d.Entity).WithMany()
+                .HasForeignKey(d => d.EntityId)
+                .HasConstraintName("FK__Likes__EntityID__412EB0B6");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Likes__UserID__3E52440B");
         });
 
         modelBuilder.Entity<Post>(entity =>
@@ -61,6 +122,11 @@ public partial class Exe201Context : DbContext
                 .IsUnicode(false)
                 .HasColumnName("UserID");
             entity.Property(e => e.VideoUrl).HasMaxLength(255);
+
+            entity.HasOne(d => d.Category).WithMany(p => p.Posts)
+                .HasForeignKey(d => d.CategoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Posts__CategoryI__34C8D9D1");
 
             entity.HasOne(d => d.User).WithMany(p => p.Posts)
                 .HasForeignKey(d => d.UserId)

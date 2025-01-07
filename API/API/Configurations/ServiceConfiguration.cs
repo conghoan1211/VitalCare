@@ -1,4 +1,5 @@
-﻿using API.Models;
+﻿using Amazon.S3;
+using API.Models;
 using API.Services;
 using InstagramClone.Utilities;
 using Microsoft.AspNetCore.Authentication;
@@ -15,8 +16,15 @@ namespace API.Configurations
             services.AddDbContext<Exe201Context>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("MyDB")));
 
-            services.AddScoped<JwtAuthentication>(); // Register JwtAuthentication
+            services.AddSingleton<JwtAuthentication>(); 
+            services.AddSingleton<IAmazonS3>(sp => new AmazonS3Client(
+                  ConfigManager.gI().AWSAccessKey,
+                  ConfigManager.gI().AWSSecretKey,
+                  Amazon.RegionEndpoint.GetBySystemName(ConfigManager.gI().AWSRegion)
+            ));
             services.AddScoped<IAuthenticateService, AuthenticateService>();
+            services.AddScoped<IAmazonS3Service, AmazonS3Service>();
+            services.AddScoped<IPostService, PostService>();
 
         }
     }

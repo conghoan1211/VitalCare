@@ -10,7 +10,7 @@ namespace API.Common
 {
     public static class Converter
     {
-        public static string StringRemoveMarkVietnamese(this string input, int type = 0)
+        public static string RemoveMarkVN(this string input, int type = 0)
         {
             Regex regex = new Regex("\\p{IsCombiningDiacriticalMarks}+");
             string input2 = input.Normalize(NormalizationForm.FormD);
@@ -22,8 +22,8 @@ namespace API.Common
                 _ => text,
             };
         }
-        public static string StringRemoveMarkVietnameseToLower(this string input) => input.StringRemoveMarkVietnamese(1);
-        public static string StringRemoveMarkVietnameseToUpper(this string input) => input.StringRemoveMarkVietnamese(2);
+        public static string RemoveMarkVNToLower(this string input) => input.RemoveMarkVN(1);
+        public static string RemoveMarkVNToUpper(this string input) => input.RemoveMarkVN(2);
 
         public static string Standardizing(this string text)
         {
@@ -31,7 +31,7 @@ namespace API.Common
             {
                 return string.Empty;
             }
-            return text.StringRemoveMarkVietnameseToLower();
+            return text.RemoveMarkVNToLower();
         }
 
         /// xóa mọi khoảng trắng

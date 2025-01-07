@@ -21,15 +21,15 @@ CREATE TABLE [User](
 	[CreateUser] [nvarchar](36) NULL,
 	[UpdateUser] [nvarchar](36) NULL,
 	[Status] [int] NULL,                -- status online
-	[LastLogin] [datetime] NULL,
 	[BlockUntil] [datetime] NULL,
+	[LastLogin] [datetime] NULL,
 	[LastLoginIP] [nvarchar](255) NULL,
 )
 
 CREATE TABLE [Posts](
 	[PostID] [varchar](36) primary key NOT NULL ,
 	[UserID] [varchar](36) NOT NULL,
-	[CategoryID] INT NOT NULL, 
+	[CategoryID] [int] NOT NULL, 
 	[Content] [nvarchar](MAX) NULL,
 	[Title] [nvarchar](255) NOT NULL,
 	[Thumbnail] [nvarchar](255) NOT NULL,
@@ -47,37 +47,63 @@ CREATE TABLE [Posts](
 	[UpdatedAt] [datetime] NULL,
 	[CreateUser] [nvarchar](36) NULL,
 	[UpdateUser] [nvarchar](36) NULL,
-	FOREIGN KEY([UserID]) REFERENCES [User] ([UserID])
+	FOREIGN KEY([UserID]) REFERENCES [User] ([UserID]),
+	FOREIGN KEY([CategoryID]) REFERENCES [Category] ([ID])
 )
 
 CREATE TABLE Category (
-    [ID] INT PRIMARY KEY IDENTITY(1,1),s
-    [Name] NVARCHAR(255),
-	[TypeObject] INT NOT NULL,
-	[IsActive] BIT NULL,
-	[IsDeleted] BIT NULL,
+    [ID] [int] PRIMARY KEY IDENTITY(1,1),
+    [Name] [nvarchar](255),
+	[TypeObject] [int] NOT NULL,
+	[IsActive] [bit] NULL,
+	[IsDeleted] [bit] NULL,
 );
 
 CREATE TABLE Product (
-	[ProductID] VARCHAR(36) PRIMARY KEY,
-    [Title] NVARCHAR(255) NOT NULL,
-    [CurrentPrice] INT NOT NULL,
-    [NewPrice] INT NOT NULL,
-    [ImageUrl] NVARCHAR(500) NULL,
-    [ProductUrl] NVARCHAR(500) NOT NULL,
-    [Description] NVARCHAR(MAX) NULL,
-    [CategoryID] INT NOT NULL, 
-	[Sold] INT NULL,
-    [Stock] INT NULL,        
-    [Status] INT NULL,      -- yeu thich/ het hang/ khuyen mai/ sale...	 	
+	[ProductID] [varchar](36) PRIMARY KEY,
+    [Title] [nvarchar](255) NOT NULL,
+    [CurrentPrice] [int] NOT NULL,
+    [NewPrice] [int] NOT NULL,
+    [ImageUrl] [nvarchar](500) NULL,
+    [ProductUrl] [nvarchar](500) NOT NULL,
+    [Description] [nvarchar](MAX) NULL,
+    [CategoryID] [int] NOT NULL, 
+	[Sold] [int] NULL,
+    [Stock] [int] NULL,        
+    [Status] [int] NULL,      -- yeu thich/ het hang/ khuyen mai/ sale...	 	
 	[Rating] FLOAT NULL,
-	[IsDeleted] BIT NULL,
-	[IsActive] BIT NULL,
+	[IsDeleted] [bit] NULL,
+	[IsActive] [bit] NULL,
 	[CreatedAt] [datetime] NULL,
 	[UpdatedAt] [datetime] NULL,
  
-	FOREIGN KEY ([CategoryID])	REFERENCES Category(ID),
+	FOREIGN KEY ([CategoryID]) REFERENCES Category(ID),
 );
+
+CREATE TABLE [Comments](
+	[CommentID] [varchar](36) NOT NULL,
+	[EntityID] [varchar](36) NOT NULL,
+	[UserID] [varchar](36) NOT NULL,
+	[TypeObject] [int] NOT NULL,                 -- 1: post, 2: product
+	[Content] [nvarchar](500) NULL,
+	[Likes] [int] NULL,
+	[IsHide] [int] NULL,
+	[IsPinTop] [bit] NULL,
+	[CreatedAt] [datetime] NULL,
+    FOREIGN KEY([UserID]) REFERENCES [dbo].[User] ([UserID]),
+    FOREIGN KEY([EntityID]) REFERENCES [dbo].[Posts] ([PostID])  ON DELETE CASCADE,
+)
+
+CREATE TABLE  [Likes](
+	[LikeID] [varchar](36) NOT NULL,
+	[UserID] [varchar](36) NOT NULL,
+	[EntityID] [varchar](36) NOT NULL,
+	[TypeObject] [int] NOT NULL,
+	[CreatedAt] [datetime] NULL,
+
+    FOREIGN KEY([EntityID]) REFERENCES [dbo].[Posts] ([PostID])  ON DELETE CASCADE,
+    FOREIGN KEY([UserID] ) REFERENCES [dbo].[User] ([UserID])
+)
 
 
 CREATE INDEX IX_Users_Username_Email ON [User] (Username, Email);
@@ -87,13 +113,28 @@ WHERE object_id = OBJECT_ID('User');
 
 
 
--- add user  LastLogin, user.LastLoginIP = httpContext.Connection.RemoteIpAddress?.ToString();
 
-select * from [User]
+select * from [comments]
+
+alter table likes 
+drop column	[PostID]
+
+alter table likes 
+add	[EntityID] [varchar](36) NOT NULL
 
 
-alter table [user]
-add LastLoginIP NVARCHAR(255) NULL
+ALTER TABLE posts
+add	FOREIGN KEY([CategoryID]) REFERENCES [Category] ([ID])
 
-ALTER TABLE product
-add NewPrice int  NULL
+SELECT 
+    CONSTRAINT_NAME
+FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+WHERE TABLE_NAME = 'Likes' AND CONSTRAINT_TYPE = 'FOREIGN KEY';
+
+ALTER TABLE Likes DROP CONSTRAINT FK__Likes__PostID__3D5E1FD2;
+
+ALTER TABLE Likes
+ADD  FOREIGN KEY (EntityID)
+REFERENCES Posts (PostID) ON DELETE CASCADE;
+
+*/

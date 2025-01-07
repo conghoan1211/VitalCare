@@ -8,8 +8,18 @@ namespace API.Configurations
     {
         public MappingProfile()
         {
+            // User mapping
             CreateMap<User, UserVM>();
             CreateMap<User, ProfileVM>();
+
+
+            // Post mapping
+            CreateMap<Post, PostListVM>();
+            CreateMap<Post, PostVM>();
+
+
+            // Product mapping
+
 
         }
     }

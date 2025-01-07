@@ -3,7 +3,7 @@
     public static class Constant
     {
         public static readonly string UrlImagePath = "wwwroot/img";
-        public static readonly IList<string> IMAGE_EXTENDS = new List<string> { ".png", ".jpg", ".jpeg", ".svg" }.AsReadOnly();
+        public static readonly IList<string> IMAGE_EXTENDS = new List<string> { ".png", ".jpg", ".jpeg" }.AsReadOnly();
 
     }
 
@@ -44,6 +44,12 @@
         Admin,
     }
 
+    public enum TypeCateria
+    {
+        Post = 1,
+        Product
+    }
+
     public enum MessageStatus
     {
         NotSent = 0,
@@ -62,7 +68,6 @@
     public enum PostPrivacy
     {
         Public = 0,
-        Friend,
         Private,
     }
 

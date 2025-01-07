@@ -14,7 +14,6 @@ namespace API.Services
         public Task<(string msg, ProfileVM? result)> GetProfile(string userID);
         public Task<(string, UpdateProfileModels?)> GetProfileUpdate(string userID);
         public Task<string> DoChangeAvatar(string userid, UpdateAvatarVM input, HttpContext http);
-
         public Task<string> UpdateProfile(string userID, UpdateProfileModels? updatedProfile, HttpContext http);
     }
     public class ProfileService : IProfileService

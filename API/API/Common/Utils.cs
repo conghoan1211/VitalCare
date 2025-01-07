@@ -22,7 +22,7 @@ namespace API.Common
         }
         public static bool IsEmpty(this string? text)
         {
-            return string.IsNullOrWhiteSpace(text);
+            return string.IsNullOrEmpty(text) || string.IsNullOrWhiteSpace(text);
         }
         public static bool IsObjectEmpty<T>(this List<T> lt)
         {
@@ -126,7 +126,7 @@ namespace API.Common
             {
                 if (file.Length > 1048576) // Giới hạn kích thước 1MB
                 {
-                    return ("The file is too large.", null);
+                    return ("The file is too large (<= 1MB).", null);
                 }
 
                 var extension = Path.GetExtension(file.FileName).ToLowerInvariant();

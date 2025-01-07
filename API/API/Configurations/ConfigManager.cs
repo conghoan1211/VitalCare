@@ -26,6 +26,12 @@
         public string FacebookAppSecret { get; set; }
         public string FacebookRedirectUri { get; set; }
 
+        // AWS settings
+        public string AWSAccessKey { get; set; }
+        public string AWSSecretKey { get; set; }
+        public string AWSBucketName { get; set; }
+        public string AWSRegion { get; set; }
+
         public static ConfigManager gI()
         {
             return _instance;
@@ -51,10 +57,12 @@
                 EmailHost = _configuration.GetSection("EmailSettings").GetSection("EmailHost").Value;
                 EmailUsername = _configuration.GetSection("EmailSettings").GetSection("EmailUsername").Value;
                 EmailPassword = _configuration.GetSection("EmailSettings").GetSection("EmailPassword").Value;
+
                 SecretKey = _configuration.GetSection("JwtSettings").GetSection("SecretKey").Value;
                 Issuer = _configuration.GetSection("JwtSettings").GetSection("SecretKey").Value;
                 Audience = _configuration.GetSection("JwtSettings").GetSection("Audience").Value;
                 ExpiresInMinutes = int.Parse(_configuration.GetSection("JwtSettings").GetSection("ExpiresInMinutes").Value);
+
                 GoogleClientIp = _configuration.GetSection("Google").GetSection("ClientId").Value;
                 GoogleClientSecert = _configuration.GetSection("Google").GetSection("ClientSecret").Value;
                 GoogleRedirectUri = _configuration.GetSection("Google").GetSection("RedirectUri").Value;
@@ -62,6 +70,11 @@
                 FacebookAppId = _configuration.GetSection("Facebook").GetSection("AppId").Value;
                 FacebookAppSecret = _configuration.GetSection("Facebook").GetSection("AppSecret").Value;
                 FacebookRedirectUri = _configuration.GetSection("Facebook").GetSection("RedirectUri").Value;
+
+                AWSAccessKey = _configuration.GetSection("AWS").GetSection("AccessKey").Value;
+                AWSSecretKey = _configuration.GetSection("AWS").GetSection("SecretKey").Value;
+                AWSBucketName = _configuration.GetSection("AWS").GetSection("BucketName").Value;
+                AWSRegion = _configuration.GetSection("AWS").GetSection("Region").Value;
             }
             catch (Exception e)
             {

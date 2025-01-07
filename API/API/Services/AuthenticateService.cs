@@ -75,6 +75,7 @@ namespace API.Services
 
                 user.Password = mkMd5;
                 user.UpdateUser = user.UserId;
+                user.UpdateAt = DateTime.Now;
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
             }
@@ -142,9 +143,9 @@ namespace API.Services
             {
                 user.Avatar = input.Picture ?? user.Avatar;           
                 user.Username = input.Name ?? user.Username;
+                user.GoogleId = input.Id;                                                                   //
                 user.LastLogin = DateTime.Now;
                 user.LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString();
-                user.GoogleId = input.Id;  ///////
                 hasPassword = !string.IsNullOrEmpty(user.Password);
                 _context.Users.Update(user);
             }

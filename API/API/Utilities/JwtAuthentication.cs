@@ -101,7 +101,6 @@ namespace InstagramClone.Utilities
             var roleId = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
             var avatar = jwtToken.Claims.FirstOrDefault(x => x.Type == "Avatar")?.Value;
 
-
             // Create a UserToken object with the extracted data
             var authUser = new UserToken
             {
