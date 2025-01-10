@@ -145,10 +145,11 @@ public partial class Exe201Context : DbContext
                 .IsUnicode(false)
                 .HasColumnName("ProductID");
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
+            entity.Property(e => e.CreateUser).HasMaxLength(36);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
-            entity.Property(e => e.ImageUrl).HasMaxLength(500);
             entity.Property(e => e.ProductUrl).HasMaxLength(500);
             entity.Property(e => e.Title).HasMaxLength(255);
+            entity.Property(e => e.UpdateUser).HasMaxLength(36);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Products)

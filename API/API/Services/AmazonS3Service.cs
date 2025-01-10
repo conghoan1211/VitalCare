@@ -1,16 +1,16 @@
 ﻿using Amazon.S3.Model;
 using Amazon.S3;
 using API.Configurations;
-using Azure;
-using static System.Net.WebRequestMethods;
 
 namespace API.Services
 {
     public interface IAmazonS3Service
     {
-        public Task<string> UploadFileAsync(string key, Stream fileStream, string contentType);
+        public Task<string> UploadFileAsync(string key, IFormFile file);
+        public Task<List<string>> UploadFilesAsync(string key, List<IFormFile>? files);
         public Task<bool> DoesFileExistAsync(string fileKey);
         public Task<object> DeleteFileAsync(string fileKey);
+        public Task<bool> DeleteFolderAsync(string folderKey);
 
     }
 
@@ -31,8 +31,7 @@ namespace API.Services
                 Amazon.RegionEndpoint.GetBySystemName(_AwsRegion)
             );
         }
-
-        public async Task<string> UploadFileAsync(string key, Stream fileStream, string contentType)
+        public async Task<string> UploadFileAsync(string key, IFormFile file)
         {
             try
             {
@@ -40,21 +39,46 @@ namespace API.Services
                 {
                     BucketName = _bucketName,
                     Key = key,
-                    InputStream = fileStream,
-                    ContentType = contentType,
-                    //  CannedACL = S3CannedACL.PublicRead
+                    InputStream = file.OpenReadStream(),
+                    ContentType = file.ContentType,
                 };
 
                 var response = await _s3Client.PutObjectAsync(putRequest);
                 return response.HttpStatusCode == System.Net.HttpStatusCode.OK
-                    ? $"Success: https://{_bucketName}.s3.amazonaws.com/{key}"
-                    : "Response error while upload file in S3service";
+                    ? $"https://{_bucketName}.s3.amazonaws.com/{key}"
+                    : "";
             }
             catch (Exception ex)
             {
-                throw new Exception("Catched an error happened while upload file in S3Service!" + ex.Message);
+                throw new Exception("An error occurred while uploading to S3! " + ex.Message);
             }
         }
+
+        public async Task<List<string>> UploadFilesAsync(string key, List<IFormFile>? files)
+        {
+            var uploadedUrls = new List<string>();
+            foreach (var file in files)
+            {
+                if (file.Length > 0)  
+                {
+                    try
+                    {
+                        var url = await UploadFileAsync($"{key}/{file.FileName}", file);
+                        if (!string.IsNullOrEmpty(url))
+                        {
+                            uploadedUrls.Add(url);   
+                        }
+                        else throw new Exception($"Failed to upload file: {file.FileName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"An error occurred while uploading file {file.FileName}: {ex.Message}");
+                    }
+                }
+            }
+            return uploadedUrls;
+        }
+
 
         public async Task<object> DeleteFileAsync(string fileKey)
         {
@@ -78,6 +102,39 @@ namespace API.Services
                 return $"Unexpected error: {ex.Message}";
             }
         }
+
+        public async Task<bool> DeleteFolderAsync(string folderKey)
+        {
+            try
+            {
+                var listRequest = new ListObjectsV2Request
+                {
+                    BucketName = _bucketName,
+                    Prefix = folderKey  
+                };
+
+                var listResponse = await _s3Client.ListObjectsV2Async(listRequest);
+                if (listResponse.S3Objects.Count > 0)
+                {
+                    var deleteObjectsRequest = new DeleteObjectsRequest
+                    {
+                        BucketName = _bucketName,
+                        Objects = listResponse.S3Objects
+                            .Select(o => new KeyVersion { Key = o.Key })
+                            .ToList()
+                    };
+
+                    var deleteResponse = await _s3Client.DeleteObjectsAsync(deleteObjectsRequest);
+                    return deleteResponse.HttpStatusCode == System.Net.HttpStatusCode.OK;
+                }
+                return true; // Nothing to delete
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while deleting folder: " + ex.Message);
+            }
+        }
+
 
         public async Task<bool> DoesFileExistAsync(string fileKey)
         {

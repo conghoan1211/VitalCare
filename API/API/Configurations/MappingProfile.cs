@@ -19,6 +19,9 @@ namespace API.Configurations
 
 
             // Product mapping
+            CreateMap<Product, ProductDetailVM>();
+            CreateMap<Product, ProductListVM>();
+            CreateMap<Product, ProductsVM>();
 
 
         }

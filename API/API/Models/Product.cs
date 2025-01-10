@@ -9,9 +9,9 @@ public partial class Product
 
     public string Title { get; set; } = null!;
 
-    public string? ImageUrl { get; set; }
+    public string ImageUrl { get; set; } = null!;
 
-    public string ProductUrl { get; set; } = null!;
+    public string? ProductUrl { get; set; }
 
     public string? Description { get; set; }
 
@@ -36,6 +36,10 @@ public partial class Product
     public int CurrentPrice { get; set; }
 
     public int? NewPrice { get; set; }
+
+    public string? CreateUser { get; set; }
+
+    public string? UpdateUser { get; set; }
 
     public virtual Category Category { get; set; } = null!;
 }

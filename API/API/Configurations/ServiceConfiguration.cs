@@ -26,6 +26,7 @@ namespace API.Configurations
             services.AddScoped<IAmazonS3Service, AmazonS3Service>();
             services.AddScoped<IPostService, PostService>();
             services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<IProductService, ProductService>();
 
 
         }

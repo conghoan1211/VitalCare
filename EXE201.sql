@@ -64,9 +64,9 @@ CREATE TABLE Product (
 	[ProductID] [varchar](36) PRIMARY KEY,
     [Title] [nvarchar](255) NOT NULL,
     [CurrentPrice] [int] NOT NULL,
-    [NewPrice] [int] NOT NULL,
-    [ImageUrl] [nvarchar](500) NULL,
-    [ProductUrl] [nvarchar](500) NOT NULL,
+    [NewPrice] [int] NULL,
+    [ImageUrl] [nvarchar](MAX) NULL,
+    [ProductUrl] [nvarchar](500) NULL,
     [Description] [nvarchar](MAX) NULL,
     [CategoryID] [int] NOT NULL, 
 	[Sold] [int] NULL,
@@ -77,7 +77,8 @@ CREATE TABLE Product (
 	[IsActive] [bit] NULL,
 	[CreatedAt] [datetime] NULL,
 	[UpdatedAt] [datetime] NULL,
- 
+    [CreateUser] [nvarchar](36) NULL,
+ 	[UpdateUser] [nvarchar](36) NULL,
 	FOREIGN KEY ([CategoryID]) REFERENCES Category(ID),
 );
 
@@ -113,7 +114,7 @@ FROM sys.indexes
 WHERE object_id = OBJECT_ID('User');
 
 
-
+/*
 
 select * from likes
 select * from [user]
@@ -121,9 +122,14 @@ select * from [user]
 alter table [user]
 add [Address] nvarchar(255) null
 
-alter table likes 
-add	[EntityID] [varchar](36) NOT NULL
+alter table Product 
+add	[UpdateUser] [nvarchar](36) NULL,
 
+ALTER TABLE Product
+ALTER COLUMN [NewPrice] INT NULL;
+
+ALTER TABLE Product
+ALTER COLUMN [ImageUrl] NVARCHAR(max) not NULL;
 
 ALTER TABLE posts
 add	FOREIGN KEY([CategoryID]) REFERENCES [Category] ([ID])

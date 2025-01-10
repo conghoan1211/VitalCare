@@ -115,8 +115,6 @@ namespace API.Services
                 if (user == null) return "User not found";
                 if (input.Image == null) return "";
 
-                var newUrl = $"{UrlS3.UrlMain}{UrlS3.Profile}{userid}/{input.Image.FileName}";
-
                 if (!string.IsNullOrEmpty(user.Avatar))
                 {
                     string oldAvatarUrl = Helper.Common.ExtractKeyFromUrl(user.Avatar);
@@ -126,10 +124,10 @@ namespace API.Services
                     }
                 }
                 string newAvatarKey = $"{UrlS3.Profile}{userid}/{input.Image.FileName}";
-                string msg = await _s3Service.UploadFileAsync(newAvatarKey, input.Image.OpenReadStream(), input.Image.ContentType);
-                if (!msg.StartsWith("Success")) return $"Error uploading new avatar: {msg}";
+                string url = await _s3Service.UploadFileAsync(newAvatarKey, input.Image);
+                if (url.IsEmpty()) return "Error: Cannot upload file to s3!";
 
-                user.Avatar = newUrl;
+                user.Avatar = url;
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
 

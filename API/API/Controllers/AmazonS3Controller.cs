@@ -29,7 +29,7 @@ namespace API.Controllers
                 return BadRequest("File is required.");
 
             var fileKey = $"uploads/{file.FileName}";
-            var fileUrl = await _s3Service.UploadFileAsync(fileKey, file.OpenReadStream(), file.ContentType);
+            var fileUrl = await _s3Service.UploadFileAsync(fileKey, file);
 
             if (fileUrl == null)
                 return StatusCode(500, "Failed to upload file.");
