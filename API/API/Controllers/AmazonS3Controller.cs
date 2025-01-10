@@ -1,5 +1,6 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
+using API.Common;
 using API.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -36,9 +37,35 @@ namespace API.Controllers
             return Ok(new { FileUrl = fileUrl });
         }
 
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteFile(string filekey)
+        {
+            if (string.IsNullOrEmpty(filekey))
+                return BadRequest("File key is required.");
+
+            var msg = await _s3Service.DeleteFileAsync(filekey);
+
+            return Ok(msg);  
+        }
+
+        [HttpGet("get")]
+        public async Task<IActionResult> DoesFileExistAsync(string filekey)
+        {
+            if (filekey.IsEmpty())
+                return BadRequest("File is required.");
+
+            bool obj = await _s3Service.DoesFileExistAsync(filekey);
+
+            if (obj == false)
+                return BadRequest($"File is not exit");
+
+            return Ok(obj);
+        }
+
+
         // Download file from S3
         [HttpGet("download")]
-        public async Task DownloadFileFromS3(string fileKey)
+        public async Task<IActionResult> DownloadFileFromS3(string fileKey)
         {
             try
             {
@@ -56,13 +83,13 @@ namespace API.Controllers
                     using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
                     {
                         await stream.CopyToAsync(fileStream);
-                        Console.WriteLine("File downloaded successfully.");
+                        return Ok("File downloaded successfully.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error downloading file: {ex.Message}");
+                return BadRequest($"Error downloading file: {ex.Message}");
             }
         }
     }

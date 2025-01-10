@@ -169,6 +169,7 @@ public partial class Exe201Context : DbContext
                 .HasMaxLength(36)
                 .IsUnicode(false)
                 .HasColumnName("UserID");
+            entity.Property(e => e.Address).HasMaxLength(255);
             entity.Property(e => e.Avatar).HasMaxLength(255);
             entity.Property(e => e.Bio).HasMaxLength(150);
             entity.Property(e => e.BlockUntil).HasColumnType("datetime");

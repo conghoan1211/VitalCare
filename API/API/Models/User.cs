@@ -49,5 +49,7 @@ public partial class User
 
     public string? LastLoginIp { get; set; }
 
+    public string? Address { get; set; }
+
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
 }

@@ -31,6 +31,8 @@
         public string AWSSecretKey { get; set; }
         public string AWSBucketName { get; set; }
         public string AWSRegion { get; set; }
+        public string UrlS3Key { get; set; }
+
 
         public static ConfigManager gI()
         {
@@ -75,6 +77,7 @@
                 AWSSecretKey = _configuration.GetSection("AWS").GetSection("SecretKey").Value;
                 AWSBucketName = _configuration.GetSection("AWS").GetSection("BucketName").Value;
                 AWSRegion = _configuration.GetSection("AWS").GetSection("Region").Value;
+                UrlS3Key = _configuration.GetSection("AWS").GetSection("UrlKey").Value;
             }
             catch (Exception e)
             {

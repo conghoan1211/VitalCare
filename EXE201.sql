@@ -13,6 +13,7 @@ CREATE TABLE [User](
 	[Sex] [int] NULL,
 	[Dob] [datetime] NULL,
 	[Bio] [nvarchar](150) NULL,
+	[Address] [nvarchar](255) NULL,
 	[IsDisable] [bit] NULL,    -- turn off by user
 	[IsActive] [bit] NULL,      -- turn off by admin
 	[IsVerified] [bit] NULL,
@@ -114,10 +115,11 @@ WHERE object_id = OBJECT_ID('User');
 
 
 
-select * from [comments]
+select * from likes
+select * from [user]
 
-alter table likes 
-drop column	[PostID]
+alter table [user]
+add [Address] nvarchar(255) null
 
 alter table likes 
 add	[EntityID] [varchar](36) NOT NULL
@@ -131,10 +133,13 @@ SELECT
 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
 WHERE TABLE_NAME = 'Likes' AND CONSTRAINT_TYPE = 'FOREIGN KEY';
 
-ALTER TABLE Likes DROP CONSTRAINT FK__Likes__PostID__3D5E1FD2;
+INSERT INTO Posts (PostID, UserID, CategoryID, Title, Thumbnail)
+VALUES ('post1', '670547e5-621a-460b-8c30-5645f40704c0', 1, 'Sample Post', 'default.jpg');
 
-ALTER TABLE Likes
-ADD  FOREIGN KEY (EntityID)
-REFERENCES Posts (PostID) ON DELETE CASCADE;
+INSERT INTO  Likes (LikeID, UserID, [EntityID], CreatedAt,[TypeObject])
+VALUES ('like1', '670547e5-621a-460b-8c30-5645f40704c0', 'post1', GETDATE(), 1);
 
-*/
+INSERT INTO  [Comments] ([CommentID], UserID, [EntityID], CreatedAt,[TypeObject])
+VALUES ('c1', '670547e5-621a-460b-8c30-5645f40704c0', 'post1', GETDATE(), 1);
+
+DELETE FROM Posts WHERE PostID = 'post1';

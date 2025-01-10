@@ -21,11 +21,14 @@ namespace API.Services
         private readonly IMapper _mapper;
         private readonly Exe201Context _context;
         private readonly JwtAuthentication _jwtAuthen;
-        public ProfileService(IMapper mapper, Exe201Context context, JwtAuthentication jwtAuthen)
+        private readonly IAmazonS3Service _s3Service;
+
+        public ProfileService(IMapper mapper, Exe201Context context, JwtAuthentication jwtAuthen, IAmazonS3Service s3Service)
         {
             _context = context;
             _jwtAuthen = jwtAuthen;
             _mapper = mapper;
+            _s3Service = s3Service;
         }
 
         public async Task<(string msg, bool success)> ToggleIsActive(string userId)
@@ -50,7 +53,7 @@ namespace API.Services
 
         public async Task<(string msg, ProfileVM? result)> GetProfile(string userID)
         {
-            if (userID == null)   return ("Không tìm thấy user id.", null);
+            if (userID == null) return ("Không tìm thấy user id.", null);
 
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userID);
             if (user == null) return ("User not found", null);
@@ -68,7 +71,10 @@ namespace API.Services
 
             var oldProfile = new UpdateProfileModels
             {
-                UserName = user.Username, Sex = user.Sex,  Dob = user.Dob,  Bio = user.Bio
+                UserName = user.Username,
+                Sex = user.Sex,
+                Dob = user.Dob,
+                Bio = user.Bio
             };
 
             if (oldProfile.IsObjectEqual(updatedProfile)) return "";
@@ -78,10 +84,11 @@ namespace API.Services
             user.Bio = updatedProfile.Bio;
             user.Username = updatedProfile.UserName;
             user.UpdateAt = DateTime.Now;
+            user.Address = updatedProfile.Address;
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            http.Response.Cookies.Delete("JwtToken");        
+            http.Response.Cookies.Delete("JwtToken");
             var token = _jwtAuthen.GenerateJwtToken(user, http);
             return "";
         }
@@ -102,28 +109,33 @@ namespace API.Services
 
         public async Task<string> DoChangeAvatar(string userid, UpdateAvatarVM input, HttpContext http)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userid);
-            if (user == null) return "User not found";
-
-            var files = input.Image;
-            if (files == null)  return "";
-
-            var (msg, fileName) = await Utils.GetUrlImage(files);
-            if (msg.Length > 0) return msg;
-
-            var oldAvatarPath = Path.Combine(Directory.GetCurrentDirectory(), Constant.UrlImagePath, user.Avatar ?? "");
-            if (File.Exists(oldAvatarPath)) File.Delete(oldAvatarPath);   // delete old file
-
             try
             {
-                user.Avatar = fileName;
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userid);
+                if (user == null) return "User not found";
+                if (input.Image == null) return "";
+
+                var newUrl = $"{UrlS3.UrlMain}{UrlS3.Profile}{userid}/{input.Image.FileName}";
+
+                if (!string.IsNullOrEmpty(user.Avatar))
+                {
+                    string oldAvatarUrl = Helper.Common.ExtractKeyFromUrl(user.Avatar);
+                    if (!string.IsNullOrEmpty(oldAvatarUrl))
+                    {
+                        await _s3Service.DeleteFileAsync(oldAvatarUrl);
+                    }
+                }
+                string newAvatarKey = $"{UrlS3.Profile}{userid}/{input.Image.FileName}";
+                string msg = await _s3Service.UploadFileAsync(newAvatarKey, input.Image.OpenReadStream(), input.Image.ContentType);
+                if (!msg.StartsWith("Success")) return $"Error uploading new avatar: {msg}";
+
+                user.Avatar = newUrl;
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
 
                 // Update the JWT token
-                http.Response.Cookies.Delete("JwtToken"); 
-                var token = _jwtAuthen.GenerateJwtToken(user, http); 
-        
+                http.Response.Cookies.Delete("JwtToken");
+                var token = _jwtAuthen.GenerateJwtToken(user, http);         // add return token to frontend
             }
             catch (Exception ex)
             {

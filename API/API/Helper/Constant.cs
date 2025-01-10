@@ -1,10 +1,13 @@
-﻿namespace API.Helper
+﻿using API.Configurations;
+
+namespace API.Helper
 {
     public static class Constant
     {
         public static readonly string UrlImagePath = "wwwroot/img";
         public static readonly IList<string> IMAGE_EXTENDS = new List<string> { ".png", ".jpg", ".jpeg" }.AsReadOnly();
 
+        public const long AVATAR_FILE_SIZE = 1 * 1024 * 1024;
     }
 
     public static class ConstMessage
@@ -19,6 +22,16 @@
         public static readonly string NOTIFY_ACCEPTED_FRIENDS = "accepted your friends request.";
 
     }
+
+    public static class UrlS3
+    {
+        public static readonly string UrlMain = ConfigManager.gI().UrlS3Key;
+        public static readonly string Profile = "profile/";
+        public static readonly string Product = "product/";
+        public static readonly string Post = "post/";
+
+    }
+
 
     public enum NotifyType
     {
@@ -37,6 +50,7 @@
         Banned,   // Người dùng bị cấm
         Suspended // Người dùng bị đình chỉ
     }
+
 
     public enum Role
     {

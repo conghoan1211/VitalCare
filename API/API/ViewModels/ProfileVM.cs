@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using API.Helper;
+using ExpressiveAnnotations.Attributes;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace API.ViewModels
 {
@@ -14,6 +17,7 @@ namespace API.ViewModels
         public string? Bio {  get; set; } = string.Empty;
         public int? Sex { get; set; }
         public DateTime? Dob {  get; set; }
+        public string? Address { get; set; }
         public bool IsVerified { get; set; }
         public bool IsActive { get; set; }               /* Admin choosen*/
         public void ToggleIsActive()
@@ -30,10 +34,9 @@ namespace API.ViewModels
 
     public class UpdateAvatarVM
     {
-    //    [AssertThat("Image.Length <= MaxFileSize", ErrorMessage = "File size must not exceed {MaxFileSize} bytes")]
+        [AssertThat("Image.Length <= MaxFileSize", ErrorMessage = "File size must not exceed {MaxFileSize} bytes")]
         public IFormFile? Image { get; set; }
-        public long MaxFileSize => 1048576;
-
+        public long MaxFileSize => Constant.AVATAR_FILE_SIZE;
     }
 
     public class UpdateProfileModels
@@ -46,10 +49,11 @@ namespace API.ViewModels
         public int? Sex { get; set; }
         [Required(ErrorMessage = "Ngày sinh không được để trống")]
         //[BirthYearValidation(1890)]
-      //  [AssertThat("Dob <= Now()", ErrorMessage = "Ngày sinh không vượt quá ngày hiện tại!")]
+        [AssertThat("Dob <= Now()", ErrorMessage = "Ngày sinh không vượt quá ngày hiện tại!")]
         public DateTime? Dob { get; set; }
         [StringLength(50, ErrorMessage = "Bio không được vượt quá 50 ký tự")]
         public string? Bio { get; set; }
+        public string? Address { get; set; }
     }
 
     public class BirthYearValidationAttribute : ValidationAttribute

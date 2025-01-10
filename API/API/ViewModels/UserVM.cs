@@ -23,6 +23,7 @@ namespace API.ViewModels
         public string? Email { get; set; }
         public string? Password { get; set; }
         public string? Avatar { get; set; }
+        public string? Address { get; set; }
         public int? RoleId { get; set; }
         public string? GoogleId { get; set; }
         public int? Sex { get; set; }

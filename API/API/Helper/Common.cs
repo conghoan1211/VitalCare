@@ -1,5 +1,4 @@
 ﻿using API.Common;
-using API.Helper;
 using API.Models;
 using System.Text.RegularExpressions;
 
@@ -61,5 +60,17 @@ namespace API.Helper
 
             return "";
         }
+        public static bool IsS3Url(this string url)
+        {
+            if (url.IsEmpty()) return false;
+            return url.StartsWith(UrlS3.UrlMain);
+        }
+
+        public static string ExtractKeyFromUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return null;
+            return url.StartsWith(UrlS3.UrlMain) ? url.Replace(UrlS3.UrlMain, "") : null;
+        }
+
     }
 }
