@@ -2,6 +2,8 @@
 using Org.BouncyCastle.Utilities.Encoders;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using API.Helper;
+using System.Text.Json.Serialization;
 
 namespace API.ViewModels
 {
@@ -33,8 +35,11 @@ namespace API.ViewModels
         [StringLength(100, MinimumLength = 15, ErrorMessage = "Tiêu đề có độ dài bắt buộc từ 15 đến 100")]
         public string Title { get; set; } = null!;
         [Required(ErrorMessage = "Cần ít nhất 1 ảnh để hiển thị sản phẩm!")]
+        [AssertThat("Image.Length <= MaxFileSize", ErrorMessage = "File size must not exceed {MaxFileSize} bytes")]
         public List<IFormFile>? ImageUrl { get; set; }
-      //  public string ProductUrl { get; set; } = null!;
+        [JsonIgnore] 
+        public long MaxFileSize => Constant.AVATAR_FILE_SIZE;
+        //  public string ProductUrl { get; set; } = null!;
         public string? Description { get; set; }
         [Required(ErrorMessage = "Vui lòng chọn loại sản phẩm!")]
         public int CategoryId { get; set; }
@@ -47,8 +52,7 @@ namespace API.ViewModels
         [DefaultValue(0)] public int? Stock { get; set; } = 0;
 
         [Display(Name = "Trạng thái")]
-        [DefaultValue(0)]
-        public int? Status { get; set; } = 0;               // yeu thich/ het hang/ khuyen mai/ sale...
+        [DefaultValue(0)] public int? Status { get; set; } = 0;               // yeu thich/ het hang/ khuyen mai/ sale...
         [DefaultValue(5)] public double? Rating { get; set; } = 5;
         [DefaultValue(true)] public bool? IsActive { get; set; } = true;
     }
@@ -57,7 +61,7 @@ namespace API.ViewModels
     public class ProductListVM
     {
         public string? ProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
         public int CurrentPrice { get; set; }
         public int NewPrice { get; set; }
         public string? ImageUrl { get; set; }
@@ -68,13 +72,13 @@ namespace API.ViewModels
     public class ProductDetailVM
     {
         public string? ProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
         public int CurrentPrice { get; set; }
         public int NewPrice { get; set; }
         public string? ImageUrl { get; set; }
         public float Rating { get; set; }
         public int Sold { get; set; }
         public int Stock {  get; set; }
-        public DateTime? CreateAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

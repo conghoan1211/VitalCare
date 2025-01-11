@@ -130,7 +130,7 @@ namespace API.Services
         {
             var list = await _context.Posts.Include(x => x.Category)
                 .Where(x => x.Category.TypeObject == (int)TypeCateria.Post && x.Privacy == (int)PostPrivacy.Public
-                && (x.Title.RemoveMarkVNToLower().Contains(title.RemoveMarkVNToLower()) || x.Title.RemoveMarkVNToLower().Contains(x.Category.Name.RemoveMarkVNToLower()))
+                && (x.Title.RemoveMarkVNToLower().Contains(title.RemoveMarkVNToLower()) || x.Category.Name.RemoveMarkVNToLower().Contains(title.RemoveMarkVNToLower()))
                 )
                 .ToListAsync();
             if (list == null || !list.Any()) return ("No post available!", null);

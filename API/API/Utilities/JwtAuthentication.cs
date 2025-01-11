@@ -25,11 +25,8 @@ namespace InstagramClone.Utilities
                 {
                     new Claim("Username", user.Username ?? ""),
                     new Claim("UserID", user.UserId.ToString() ?? ""),
-                    new Claim("Phone", user.Phone?.ToString() ?? ""),
                     new Claim(ClaimTypes.Email, user.Email ?? ""),
                     new Claim(ClaimTypes.Role, user.RoleId == (int)Role.Admin ? "Admin" : "User"),
-                    new Claim("Avatar", user.Avatar ?? "")
-
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(ConfigManager.gI().ExpiresInMinutes),  
                 Issuer = ConfigManager.gI().Issuer,
@@ -59,19 +56,14 @@ namespace InstagramClone.Utilities
             var username = claims.FirstOrDefault(c => c.Type == "Username")?.Value;
             var userID = claims.FirstOrDefault(c => c.Type == "UserID")?.Value;
             var email = claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-            var phone = claims.FirstOrDefault(c => c.Type == "Phone")?.Value;
             var roleID = claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-            var avatar = claims.FirstOrDefault(c => c.Type == "Avatar")?.Value;
-
 
             userToken = new UserToken
             {
                 UserName = username,
                 UserID = userID.ToGuid(),
                 Email = email,
-                PhoneNumber = phone,
                 RoleID = roleID,
-                Avatar = avatar
             };
             return "";
         }
@@ -97,9 +89,7 @@ namespace InstagramClone.Utilities
             var username = jwtToken.Claims.FirstOrDefault(x => x.Type == "Username")?.Value;
             var userId = jwtToken.Claims.FirstOrDefault(x => x.Type == "UserID")?.Value;
             var email = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
-            var phone = jwtToken.Claims.FirstOrDefault(x => x.Type == "Phone")?.Value;
             var roleId = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
-            var avatar = jwtToken.Claims.FirstOrDefault(x => x.Type == "Avatar")?.Value;
 
             // Create a UserToken object with the extracted data
             var authUser = new UserToken
@@ -107,9 +97,7 @@ namespace InstagramClone.Utilities
                 UserName = username,
                 UserID = userId.ToGuid(),
                 Email = email,
-                PhoneNumber = phone,
                 RoleID = roleId,
-                Avatar = avatar
             };
 
             return authUser;

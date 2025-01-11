@@ -6,6 +6,8 @@ using AutoMapper;
 using InstagramClone.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace API.Services
 {
@@ -15,6 +17,10 @@ namespace API.Services
         public Task<(string, ProductDetailVM?)> GetDetail(string productId);
         public Task<string> DoInsertUpdate(InsertUpdateProductVM? input, string userId);
         public Task<string> DoToggleActive(string productId, bool active);
+        public Task<string> DoDeleteSoft(string productId, string userid);
+        public Task<(string, List<ProductListVM>?)> DoSearch(string query);
+        public Task<(string, List<ProductListVM>?)> FilterByCategoryId(int categoryId);
+
     }
 
 
@@ -48,7 +54,9 @@ namespace API.Services
 
         public async Task<(string, ProductDetailVM?)> GetDetail(string productId)
         {
-            var list = await _context.Products.Include(x => x.Category).FirstOrDefaultAsync(x => x.ProductId == productId);
+            var list = await _context.Products.Include(x => x.Category)
+                .Where(x => x.IsActive == true && x.IsDeleted == false)
+                .FirstOrDefaultAsync(x => x.ProductId == productId);
             if (list == null) return ("No product available", null);
 
             var listMapper = _mapper.Map<ProductDetailVM>(list);
@@ -57,7 +65,9 @@ namespace API.Services
 
         public async Task<(string, List<ProductListVM>?)> GetList()
         {
-            var list = await _context.Products.Include(x => x.Category).ToListAsync();
+            var list = await _context.Products.Include(x => x.Category)
+                .Where(x => x.IsActive == true && x.IsDeleted == false)
+                .ToListAsync();
             if (list.IsNullOrEmpty()) return ("No product available", null);
 
             var listMapper = _mapper.Map<List<ProductListVM>>(list);
@@ -137,14 +147,53 @@ namespace API.Services
                 await transaction.RollbackAsync();
                 if (uploadedUrls.Any())                 // Xóa ảnh đã upload lên S3 nếu có lỗi
                 {
-                    foreach (var url in uploadedUrls)
-                    {
-                        string key = $"{UrlS3.Product}{input.ProductId}";
-                        uploadedUrls = await _s3Service.UploadFilesAsync(key, input.ImageUrl);
-                    }
+                    string key = $"{UrlS3.Product}{input.ProductId}";
+                    await _s3Service.DeleteFolderAsync(key);
                 }
                 throw new Exception("An error occurred while updating the product: " + ex.Message + " | Inner Exception: " + ex.InnerException?.Message);
             }
+        }
+
+        public async Task<string> DoDeleteSoft(string productId, string userid)
+        {
+            var product = await _context.Products.FirstOrDefaultAsync(x => x.ProductId == productId);
+            if (product == null) return ("Product is not available!");
+
+            product.IsDeleted = true;
+            product.UpdatedAt = DateTime.UtcNow;
+            product.UpdateUser = userid;
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            return string.Empty;
+        }
+
+        public async Task<(string, List<ProductListVM>?)> DoSearch(string query)
+        {
+            var list = await _context.Products.Include(x => x.Category)
+                .Where(x => x.Category.TypeObject == (int)TypeCateria.Product
+                    && x.IsActive == true && x.IsDeleted == false
+                    && (x.Title.RemoveMarkVNToLower().Contains(query.RemoveMarkVNToLower()) || x.Category.Name.RemoveMarkVNToLower().Contains(query.RemoveMarkVNToLower()))
+                )
+                .ToListAsync();
+            if (list == null || !list.Any()) return ("No post available!", null);
+
+            var postMapper = _mapper.Map<List<ProductListVM>>(list);
+            return ("", postMapper);
+        }
+
+        public async Task<(string, List<ProductListVM>?)> FilterByCategoryId(int categoryId)
+        {
+            var list = await _context.Products.Include(x => x.Category)
+              .Where(x => x.Category.TypeObject == (int)TypeCateria.Product
+                  && x.IsActive == true && x.IsDeleted == false 
+                  && x.CategoryId == categoryId
+              )
+              .ToListAsync();
+            if (list == null || !list.Any()) return ("No post available!", null);
+
+            var postMapper = _mapper.Map<List<ProductListVM>>(list);
+            return ("", postMapper);
         }
     }
 }

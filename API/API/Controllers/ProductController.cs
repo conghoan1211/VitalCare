@@ -14,6 +14,7 @@ namespace API.Controllers
         {
             _iProductService = iProductService;
         }
+        #region User role
 
         [HttpGet("GetDetail")]
         public async Task<IActionResult> GetProductDetail(string productId)
@@ -24,13 +25,31 @@ namespace API.Controllers
         }
 
         [HttpGet("GetList")]
-        public async Task<IActionResult> GetProductList(string productId)
+        public async Task<IActionResult> GetProductList()
         {
             var (msg, product) = await _iProductService.GetList();
             if (msg.Length > 0) return BadRequest(msg);
             return Ok(product);
         }
 
+        [HttpGet("Search")]
+        public async Task<IActionResult> DoSearch(string query)
+        {
+            var (msg, product) = await _iProductService.DoSearch(query);
+            if (msg.Length > 0) return BadRequest(msg);
+            return Ok(product);
+        }
+
+        [HttpGet("FilterByCategoryId")]
+        public async Task<IActionResult> GetProductList(int categoryId)
+        {
+            var (msg, product) = await _iProductService.FilterByCategoryId(categoryId);
+            if (msg.Length > 0) return BadRequest(msg);
+            return Ok(product);
+        }
+        #endregion
+
+        #region Admin role
         [HttpPost("InsertUpdate")]
         public async Task<IActionResult> DoInsertUpdateProduct(string userId, InsertUpdateProductVM? input)
         {
@@ -46,5 +65,14 @@ namespace API.Controllers
             if (msg.Length > 0) return BadRequest(msg);
             return Ok("Update Product Successfully!");
         }
+
+        [HttpPut("DeleteSoft")]
+        public async Task<IActionResult> DoToggleActive(string productId, string userId)
+        {
+            string msg = await _iProductService.DoDeleteSoft(productId, userId);
+            if (msg.Length > 0) return BadRequest(msg);
+            return Ok("Update Product Successfully!");
+        }
+        #endregion
     }
 }

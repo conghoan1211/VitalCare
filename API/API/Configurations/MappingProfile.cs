@@ -24,6 +24,11 @@ namespace API.Configurations
             CreateMap<Product, ProductsVM>();
 
 
+            // Category mapping
+            CreateMap<Category, CategoryVM>();
+
+
+
         }
     }
 }

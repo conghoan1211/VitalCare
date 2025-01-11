@@ -12,7 +12,6 @@ namespace API.Services
     public interface IAuthenticateService
     {
         public Task<(string, LoginGoogleResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext);
-
         public Task<(string, LoginResult?)> DoLogin(UserLogin userLogin, HttpContext httpContext);
         public Task<string> DoRegister(UserRegister userRegister);
         public Task<string> DoLogout(HttpContext httpContext, string phone);

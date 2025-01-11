@@ -1,7 +1,8 @@
-﻿using Amazon.S3;
-using API.Configurations;
+﻿using API.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddHttpClient();
 
 // Add session 
 builder.Services.AddSession(options =>
@@ -110,10 +112,47 @@ builder.Services.AddLogging(builder =>
     builder.AddDebug();
 });
 
+builder.Services.AddAuthorization(options =>              //  Add Authentication
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+    options.AddPolicy("UserWithClaim", policy =>
+        policy.RequireClaim("CustomClaim", "AllowedValue"));
+});
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new  OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Nhập token "
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
 var app = builder.Build();
+app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseSession();
 app.UseCors("AllowAll");
-app.UseStaticFiles();
 
 //app.Use(async (context, next) =>
 //{
@@ -129,12 +168,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseCors("AllowFrontend");
-
 app.UseAuthentication();
 app.UseAuthorization();
+app.Use(async (context, next) =>
+{
+    await next();
 
+    if (context.Response.StatusCode == 403)
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền sử dụng tính năng của admin\"}");
+    }
+});
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

@@ -116,6 +116,24 @@ namespace API.Controllers
             });
         }
 
+
+        [HttpPost("ChangePassword")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePassword input)
+        {
+            var msg = await _iAuthenticate.DoChangePassword(input);
+            if (msg.Length > 0) return BadRequest(msg);
+            return Ok(input.Password);
+        }
+
+        [HttpPost("ForgetPassword")]
+        public async Task<IActionResult> ForgetPassword([FromBody] ForgetPassword input)
+        {
+            var msg = await _iAuthenticate.DoForgetPassword(input, HttpContext);
+            if (msg.Length > 0) return BadRequest(msg);
+            return Ok(input);
+        }
+
+
         // Request model
         public class FacebookLoginRequest
         {

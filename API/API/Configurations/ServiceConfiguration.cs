@@ -27,6 +27,8 @@ namespace API.Configurations
             services.AddScoped<IPostService, PostService>();
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<ICategoryService, CategoryService>();
+
 
 
         }

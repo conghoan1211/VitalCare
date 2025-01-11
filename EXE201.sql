@@ -118,6 +118,7 @@ WHERE object_id = OBJECT_ID('User');
 
 select * from likes
 select * from [user]
+select * from category
 
 alter table [user]
 add [Address] nvarchar(255) null
