@@ -3,11 +3,8 @@ using API.Helper;
 using API.Models;
 using API.ViewModels;
 using AutoMapper;
-using InstagramClone.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Linq;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace API.Services
 {
@@ -22,7 +19,6 @@ namespace API.Services
         public Task<(string, List<ProductListVM>?)> FilterByCategoryId(int categoryId);
 
     }
-
 
     public class ProductService : IProductService
     {

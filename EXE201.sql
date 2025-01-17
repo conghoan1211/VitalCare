@@ -83,7 +83,7 @@ CREATE TABLE Product (
 );
 
 CREATE TABLE [Comments](
-	[CommentID] [varchar](36) NOT NULL,
+	[CommentID] [varchar](36) primary key NOT NULL,
 	[EntityID] [varchar](36) NOT NULL,
 	[UserID] [varchar](36) NOT NULL,
 	[TypeObject] [int] NOT NULL,                 -- 1: post, 2: product
@@ -97,7 +97,7 @@ CREATE TABLE [Comments](
 )
 
 CREATE TABLE  [Likes](
-	[LikeID] [varchar](36) NOT NULL,
+	[LikeID] [varchar](36) primary key NOT NULL,
 	[UserID] [varchar](36) NOT NULL,
 	[EntityID] [varchar](36) NOT NULL,
 	[TypeObject] [int] NOT NULL,
@@ -105,6 +105,20 @@ CREATE TABLE  [Likes](
 
     FOREIGN KEY([EntityID]) REFERENCES [dbo].[Posts] ([PostID])  ON DELETE CASCADE,
     FOREIGN KEY([UserID] ) REFERENCES [dbo].[User] ([UserID])
+)
+
+CREATE TABLE [Order] (
+	[OrderID] [varchar](36) primary key NOT NULL,
+	[UserID] [varchar](36) NOT NULL,
+	[Username] [varchar](255) NOT NULL,
+	[Phone] [varchar](255) NOT NULL,
+	[Email] [varchar](255) NOT NULL,
+	[Address] [varchar](255) NOT NULL,
+	[Note] [varchar](255) NOT NULL,
+	[UpdatedAt] [datetime] NULL,
+	[ShippedDate] [datetime] NULL,
+	[CreatedAt] [datetime] NULL,
+
 )
 
 

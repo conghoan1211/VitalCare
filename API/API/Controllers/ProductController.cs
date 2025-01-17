@@ -1,5 +1,6 @@
 ﻿using API.Services;
 using API.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,6 +52,7 @@ namespace API.Controllers
 
         #region Admin role
         [HttpPost("InsertUpdate")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> DoInsertUpdateProduct(string userId, InsertUpdateProductVM? input)
         {
             string msg = await _iProductService.DoInsertUpdate(input, userId);
@@ -59,6 +61,7 @@ namespace API.Controllers
         }
 
         [HttpPost("ToggleActive")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> DoToggleActive(string userID, bool status)
         {
             string msg = await _iProductService.DoToggleActive(userID, status);
@@ -67,6 +70,7 @@ namespace API.Controllers
         }
 
         [HttpPut("DeleteSoft")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> DoToggleActive(string productId, string userId)
         {
             string msg = await _iProductService.DoDeleteSoft(productId, userId);

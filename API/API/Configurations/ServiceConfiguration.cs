@@ -28,6 +28,8 @@ namespace API.Configurations
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IAccountService, AccountService>();
+
 
 
 
