@@ -4,15 +4,28 @@ namespace API.ViewModels
 {
     public class LoginResult
     {
-        public string? Token { get; set; }
-        public UserVM? User { get; set; }
+        // public string? Token { get; set; }
+        public UserLoginVM? Data { get; set; }
     }
 
     public class LoginGoogleResult
     {
-        public string? Token { get; set; }
+        //   public string? Token { get; set; }
         public bool? HasPassword { get; set; }
-        public UserVM? User { get; set; }
+        public UserLoginVM? Data { get; set; }
+    }
+
+    public class UserLoginVM
+    {
+        public string? UserId { get; set; }
+        public string? Username { get; set; }
+        public string? Avatar { get; set; }
+        public int? RoleId { get; set; }
+    }
+
+    public class UserLogout
+    {
+        public string? UserId { get; set; }
     }
 
     public class UserVM

@@ -12,7 +12,7 @@ namespace API.Helper
 
     public static class ConstMessage
     {
-        public static readonly string ACCOUNT_UNVERIFIED = "Tài khoản chưa được xác thực.";
+        public static readonly string ACCOUNT_UNVERIFIED = "Tài khoản chưa được xác minh.";
         public static readonly string EMAIL_EXISTED = "Email này đã tồn tại.";
 
         public static readonly string NOTIFY_LIKE_POST = "liked your post.";

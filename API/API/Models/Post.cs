@@ -47,5 +47,9 @@ public partial class Post
 
     public virtual Category Category { get; set; } = null!;
 
+    public virtual ICollection<Comment> CommentsNavigation { get; set; } = new List<Comment>();
+
+    public virtual ICollection<Like> LikesNavigation { get; set; } = new List<Like>();
+
     public virtual User User { get; set; } = null!;
 }

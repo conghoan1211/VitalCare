@@ -51,5 +51,21 @@ public partial class User
 
     public string? Address { get; set; }
 
+    public string? ProvinceId { get; set; }
+
+    public string? DistrictId { get; set; }
+
+    public string? DistrictName { get; set; }
+
+    public string? ProvinceName { get; set; }
+
+    public string? RefreshToken { get; set; }
+
+    public DateTime? ExpiryDateToken { get; set; }
+
+    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
+    public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
 }

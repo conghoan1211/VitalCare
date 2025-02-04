@@ -45,7 +45,7 @@ public partial class Exe201Context : DbContext
 
         modelBuilder.Entity<Comment>(entity =>
         {
-            entity.HasNoKey();
+            entity.HasKey(e => e.CommentId).HasName("PK__Comments__C3B4DFAA869BB7D8");
 
             entity.Property(e => e.CommentId)
                 .HasMaxLength(36)
@@ -62,11 +62,11 @@ public partial class Exe201Context : DbContext
                 .IsUnicode(false)
                 .HasColumnName("UserID");
 
-            entity.HasOne(d => d.Entity).WithMany()
+            entity.HasOne(d => d.Entity).WithMany(p => p.CommentsNavigation)
                 .HasForeignKey(d => d.EntityId)
                 .HasConstraintName("FK__Comments__Entity__403A8C7D");
 
-            entity.HasOne(d => d.User).WithMany()
+            entity.HasOne(d => d.User).WithMany(p => p.Comments)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Comments__UserID__398D8EEE");
@@ -74,27 +74,27 @@ public partial class Exe201Context : DbContext
 
         modelBuilder.Entity<Like>(entity =>
         {
-            entity.HasNoKey();
+            entity.HasKey(e => e.LikeId).HasName("PK__Likes__A2922CF4AB5BA346");
 
+            entity.Property(e => e.LikeId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("LikeID");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.EntityId)
                 .HasMaxLength(36)
                 .IsUnicode(false)
                 .HasColumnName("EntityID");
-            entity.Property(e => e.LikeId)
-                .HasMaxLength(36)
-                .IsUnicode(false)
-                .HasColumnName("LikeID");
             entity.Property(e => e.UserId)
                 .HasMaxLength(36)
                 .IsUnicode(false)
                 .HasColumnName("UserID");
 
-            entity.HasOne(d => d.Entity).WithMany()
+            entity.HasOne(d => d.Entity).WithMany(p => p.LikesNavigation)
                 .HasForeignKey(d => d.EntityId)
                 .HasConstraintName("FK__Likes__EntityID__412EB0B6");
 
-            entity.HasOne(d => d.User).WithMany()
+            entity.HasOne(d => d.User).WithMany(p => p.Likes)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Likes__UserID__3E52440B");
@@ -176,8 +176,14 @@ public partial class Exe201Context : DbContext
             entity.Property(e => e.BlockUntil).HasColumnType("datetime");
             entity.Property(e => e.CreateAt).HasColumnType("datetime");
             entity.Property(e => e.CreateUser).HasMaxLength(36);
+            entity.Property(e => e.DistrictId)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("DistrictID");
+            entity.Property(e => e.DistrictName).HasMaxLength(225);
             entity.Property(e => e.Dob).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.ExpiryDateToken).HasColumnType("datetime");
             entity.Property(e => e.GoogleId)
                 .HasMaxLength(255)
                 .HasColumnName("GoogleID");
@@ -187,6 +193,14 @@ public partial class Exe201Context : DbContext
                 .HasColumnName("LastLoginIP");
             entity.Property(e => e.Password).HasMaxLength(255);
             entity.Property(e => e.Phone).HasMaxLength(10);
+            entity.Property(e => e.ProvinceId)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("ProvinceID");
+            entity.Property(e => e.ProvinceName).HasMaxLength(225);
+            entity.Property(e => e.RefreshToken)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.RoleId).HasColumnName("RoleID");
             entity.Property(e => e.UpdateAt).HasColumnType("datetime");
             entity.Property(e => e.UpdateUser).HasMaxLength(36);

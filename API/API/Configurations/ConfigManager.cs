@@ -61,7 +61,7 @@
                 EmailPassword = _configuration.GetSection("EmailSettings").GetSection("EmailPassword").Value;
 
                 SecretKey = _configuration.GetSection("JwtSettings").GetSection("SecretKey").Value;
-                Issuer = _configuration.GetSection("JwtSettings").GetSection("SecretKey").Value;
+                Issuer = _configuration.GetSection("JwtSettings").GetSection("Issuer").Value;
                 Audience = _configuration.GetSection("JwtSettings").GetSection("Audience").Value;
                 ExpiresInMinutes = int.Parse(_configuration.GetSection("JwtSettings").GetSection("ExpiresInMinutes").Value);
 

@@ -49,10 +49,9 @@ namespace API.Utilities
             return "";
         }
 
-        public static async Task<(string message, string pass)> SendPasswordAndSaveSession(string email, HttpContext httpContext)
+        public static async Task<(string message, string pass)> SendEmailAndPassword(string email, HttpContext httpContext)
         {
             string pass = Utils.Generate6Character();
-            httpContext.Session.SetString("newPassword", pass.ToString()); // Lưu OTP
 
             string msg = await SendEmailAsync(email, "Khôi phục mật khẩu", $"Đây là mật khẩu mới của bạn: {pass}");
             if (msg.Length > 0) return (msg, "");

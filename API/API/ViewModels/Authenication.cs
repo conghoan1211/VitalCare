@@ -8,7 +8,6 @@ namespace API.ViewModels
         public string? Username { get; set; }
 
         [Required(ErrorMessage = "Mật khẩu không được để trống")]
-        [DataType(DataType.Password)]
         public string? Password { get; set; }
     }
 
@@ -45,7 +44,7 @@ namespace API.ViewModels
         [Required(ErrorMessage = "Email không được để trống")]
         [StringLength(60, ErrorMessage = "Email quá dài")]
         [EmailAddress(ErrorMessage = "Định dạng Email không đúng")]
-        public string Email { get; set; }
+        public string? Email { get; set; }
     }
     public class VerifyOTP
     {

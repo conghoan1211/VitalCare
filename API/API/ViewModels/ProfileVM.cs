@@ -44,6 +44,24 @@ namespace API.ViewModels
         [Required(ErrorMessage = "Tên hiển thị không được để trống")]
         [StringLength(50, ErrorMessage = "Tên đăng nhập không được vượt quá 50 ký tự")]
         public string? UserName { get; set; }
+ 
+        [Required(ErrorMessage = "Số điện thoại không được để trống")]
+        [RegularExpression(@"^\d{10,10}$", ErrorMessage = "Số điện thoại là chuỗi 10 ký tự chữ số")]
+        public string? Phone { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Email không được để trống")]
+        [StringLength(100, ErrorMessage = "Email quá dài")]
+        [EmailAddress(ErrorMessage = "Định dạng Email không đúng")]
+        public string? Email { get; set; }
+        [Required(ErrorMessage = "Vui lòng chọn tỉnh/thành phố.")]
+        public string? ProvinceId { get; set; }
+        [Required(ErrorMessage = "Vui lòng chọn địa chỉ huyện.")]
+        public string? DistrictId { get; set; }
+        public string? DistrictName { get; set; }
+        public string? ProvinceName { get; set; }
+        [Required(ErrorMessage = "Nhập chi tiết địa chỉ.")]
+        [StringLength(150, ErrorMessage = "Địa chỉ không được vượt quá 150 ký tự")]
+        public string? Address { get; set; }
+
         [Required(ErrorMessage = "Giới tính không được để trống")]
         [Range(0, 2, ErrorMessage = "Giới tính không hợp lệ. Vui lòng chọn: 0 (Nam), 1 (Nữ), hoặc 2 (Khác)")]
         public int? Sex { get; set; }
@@ -51,9 +69,6 @@ namespace API.ViewModels
         //[BirthYearValidation(1890)]
         [AssertThat("Dob <= Now()", ErrorMessage = "Ngày sinh không vượt quá ngày hiện tại!")]
         public DateTime? Dob { get; set; }
-        [StringLength(50, ErrorMessage = "Bio không được vượt quá 50 ký tự")]
-        public string? Bio { get; set; }
-        public string? Address { get; set; }
     }
 
     public class BirthYearValidationAttribute : ValidationAttribute

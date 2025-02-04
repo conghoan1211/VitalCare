@@ -13,7 +13,7 @@ namespace API.Services
         public Task<(string msg, bool success)> ToggleIsActive(string userId);
         public Task<(string msg, ProfileVM? result)> GetProfile(string userID);
         public Task<(string, UpdateProfileModels?)> GetProfileUpdate(string userID);
-        public Task<string> DoChangeAvatar(string userid, UpdateAvatarVM input, HttpContext http);
+        public Task<(string, string?)> DoChangeAvatar(string userid, UpdateAvatarVM input, HttpContext http);
         public Task<string> UpdateProfile(string userID, UpdateProfileModels? updatedProfile, HttpContext http);
     }
     public class ProfileService : IProfileService
@@ -74,14 +74,12 @@ namespace API.Services
                 UserName = user.Username,
                 Sex = user.Sex,
                 Dob = user.Dob,
-                Bio = user.Bio
             };
 
             if (oldProfile.IsObjectEqual(updatedProfile)) return "";
 
             user.Sex = updatedProfile.Sex;
             user.Dob = updatedProfile.Dob;
-            user.Bio = updatedProfile.Bio;
             user.Username = updatedProfile.UserName;
             user.UpdateAt = DateTime.Now;
             user.Address = updatedProfile.Address;
@@ -95,25 +93,23 @@ namespace API.Services
 
         public async Task<(string, UpdateProfileModels?)> GetProfileUpdate(string userID)
         {
-            var user = await _context.Users.Where(x => x.UserId == userID)
-                .Select(u => new UpdateProfileModels
-                {
-                    UserName = u.Username,
-                    Bio = u.Bio,
-                    Dob = u.Dob,
-                    Sex = u.Sex,
-                }).FirstOrDefaultAsync();
+            if (userID == null) return ("Không tìm thấy user id.", null);
+
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userID);
             if (user == null) return ("User not found", null);
-            return ("", user);
+        
+            var profile = _mapper.Map<UpdateProfileModels>(user);
+            return ("", profile);
         }
 
-        public async Task<string> DoChangeAvatar(string userid, UpdateAvatarVM input, HttpContext http)
+        public async Task<(string, string?)> DoChangeAvatar(string userid, UpdateAvatarVM input, HttpContext http)
         {
             try
             {
+                if (userid is null ) return ("User ID is null", null);
                 var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userid);
-                if (user == null) return "User not found";
-                if (input.Image == null) return "";
+                if (user == null) return ("User not found", null);
+                if (input.Image == null) return ("File ảnh không hợp lệ!", null);
 
                 if (!string.IsNullOrEmpty(user.Avatar))
                 {
@@ -125,7 +121,7 @@ namespace API.Services
                 }
                 string newAvatarKey = $"{UrlS3.Profile}{userid}/{input.Image.FileName}";
                 string url = await _s3Service.UploadFileAsync(newAvatarKey, input.Image);
-                if (url.IsEmpty()) return "Error: Cannot upload file to s3!";
+                if (url.IsEmpty()) return ("Error: Cannot upload file to s3!", null);
 
                 user.Avatar = url;
                 _context.Users.Update(user);
@@ -133,13 +129,14 @@ namespace API.Services
 
                 // Update the JWT token
                 http.Response.Cookies.Delete("JwtToken");
-                var token = _jwtAuthen.GenerateJwtToken(user, http);         // add return token to frontend
+                var token = _jwtAuthen.GenerateJwtToken(user, http);      
+
+                return ("", url);
             }
             catch (Exception ex)
             {
-                return $"An error occurred while updating the avatar: {ex.Message}";
+                return ($"An error occurred while updating the avatar: {ex.Message}", null);
             }
-            return "";
         }
     }
 }

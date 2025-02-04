@@ -31,7 +31,7 @@ builder.Services.AddSession(options =>
 // Add JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;  
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
@@ -63,8 +63,8 @@ builder.Services.AddAuthentication(options =>
         OnChallenge = async context =>
         {
             context.HttpContext.Response.Cookies.Delete("JwtToken");
-            context.Response.Redirect("/login");  
-            context.HandleResponse();
+            //   context.Response.Redirect("http://localhost:3000/login");  
+            //      context.HandleResponse();
             await Task.CompletedTask;
         }
     };
@@ -73,7 +73,7 @@ builder.Services.AddAuthentication(options =>
 {
     googleOptions.ClientId = ConfigManager.gI().GoogleClientIp;
     googleOptions.ClientSecret = ConfigManager.gI().GoogleClientSecert;
-    googleOptions.CallbackPath = new PathString(ConfigManager.gI().GoogleRedirectUri); 
+    googleOptions.CallbackPath = new PathString(ConfigManager.gI().GoogleRedirectUri);
     googleOptions.SaveTokens = true;
 }).AddFacebook(facebookOptions =>  // Facebook OAuth
 {
@@ -82,19 +82,16 @@ builder.Services.AddAuthentication(options =>
     facebookOptions.CallbackPath = new PathString(ConfigManager.gI().FacebookRedirectUri);
     facebookOptions.SaveTokens = true;
 });
-
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
+    options.AddPolicy("AllowFrontend",
+        policy =>
         {
-            builder
-                .WithOrigins("http://localhost:3000") // Replace with your frontend URL
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials()
-                .WithExposedHeaders("Set-Cookie");   
-
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000")  // Đổi thành domain frontend
+                  .AllowCredentials() // Quan trọng để cookie hoạt động
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .WithExposedHeaders("Set-Cookie");
         });
 });
 
@@ -122,7 +119,7 @@ builder.Services.AddAuthorization(options =>              //  Add Authentication
 
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("Bearer", new  OpenApiSecurityScheme
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = SecuritySchemeType.Http,
@@ -152,7 +149,7 @@ var app = builder.Build();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseSession();
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 //app.Use(async (context, next) =>
 //{
@@ -160,6 +157,16 @@ app.UseCors("AllowAll");
 //    context.Response.Headers.Add("Cross-Origin-Embedder-Policy", "require-corp");
 //    await next();
 //});
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://localhost:3000" );
+    context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+    context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    await next();
+});
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

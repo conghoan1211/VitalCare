@@ -7,13 +7,17 @@ CREATE TABLE [User](
 	[Phone] [nvarchar](10) NULL,
 	[Email] [nvarchar](255) NULL,
 	[Password] [nvarchar](255) NULL,
-	[Avatar] [nvarchar](255) NULL,
+	[Avatar] [nvarchar](255) NULL, 
 	[RoleID] [int] NULL,
 	[GoogleID] [nvarchar](255) NULL,
 	[Sex] [int] NULL,
 	[Dob] [datetime] NULL,
 	[Bio] [nvarchar](150) NULL,
 	[Address] [nvarchar](255) NULL,
+	[ProvinceID] [varchar](20) NULL,
+	[DistrictID] [varchar](20) NULL,
+	[DistrictName] [nvarchar](225) NULL,
+	[ProvinceName] [nvarchar](225) NULL,
 	[IsDisable] [bit] NULL,    -- turn off by user
 	[IsActive] [bit] NULL,      -- turn off by admin
 	[IsVerified] [bit] NULL,
@@ -25,6 +29,8 @@ CREATE TABLE [User](
 	[BlockUntil] [datetime] NULL,
 	[LastLogin] [datetime] NULL,
 	[LastLoginIP] [nvarchar](255) NULL,
+    [RefreshToken] [varchar](255) NULL,
+    [ExpiryDateToken] [datetime] NULL,
 )
 
 CREATE TABLE [Posts](
@@ -128,14 +134,15 @@ FROM sys.indexes
 WHERE object_id = OBJECT_ID('User');
 
 
-/*
 
+ALTER TABLE [user]
+add  [ExpiryDateToken] [datetime] NULL;
+
+/*
 select * from likes
 select * from [user]
 select * from category
 
-alter table [user]
-add [Address] nvarchar(255) null
 
 alter table Product 
 add	[UpdateUser] [nvarchar](36) NULL,

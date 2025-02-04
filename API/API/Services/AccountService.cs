@@ -12,6 +12,7 @@ namespace API.Services
         public Task<string> DoToggleActive(string userId, string usertoken, bool active);
         public Task<(string, List<UserListVM>?)> GetList();
         public Task<(string, List<UserListVM>?)> DoSearch(string query);
+        public Task<(string msg, User? user)> GetById(string userID);
 
     }
     public class AccountService : IAccountService
@@ -25,6 +26,15 @@ namespace API.Services
             _context = context;
             _mapper = mapper;
             _s3Service = s3Service;
+        }
+        public async Task<(string msg, User? user)> GetById(string userID)
+        {
+            if (userID == null) return ("Không tìm thấy user id.", null);
+
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userID);
+            if (user == null) return ("User not found", null);
+
+            return (string.Empty, user);
         }
 
         public async Task<string> DoToggleActive(string userId, string usertoken, bool active)

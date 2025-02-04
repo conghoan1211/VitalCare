@@ -4,8 +4,10 @@ using API.Models;
 using API.Utilities;
 using API.ViewModels;
 using AutoMapper;
+using Azure;
 using InstagramClone.Utilities;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace API.Services
 {
@@ -14,13 +16,14 @@ namespace API.Services
         public Task<(string, LoginGoogleResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext);
         public Task<(string, LoginResult?)> DoLogin(UserLogin userLogin, HttpContext httpContext);
         public Task<string> DoRegister(UserRegister userRegister);
-        public Task<string> DoLogout(HttpContext httpContext, string phone);
+        public Task<string> DoLogout(HttpContext httpContext, string userid);
         public Task<string> DoForgetPassword(ForgetPassword input, HttpContext httpContext);
         public Task<string> DoVerifyOTP(string otp, HttpContext httpContext);
         public Task<string> DoResetPassword(ResetPassword input);
         public Task<string> DoChangePassword(ChangePassword input);
         public Task<(string message, User? user)> DoSearchByEmail(string? email);
         public Task<(string message, User? user)> DoSearchByPhone(string? phone);
+        //public Task<string> GenerateRefreshToken(User user, HttpContext httpContext);
     }
 
     public class AuthenticateService : IAuthenticateService
@@ -65,10 +68,9 @@ namespace API.Services
             else if (user != null)
             {
                 string newpass = "";
-                (msg, newpass) = await EmailHandler.SendPasswordAndSaveSession(input.Email, httpContext);
+                (msg, newpass) = await EmailHandler.SendEmailAndPassword(input.Email, httpContext);
                 if (msg.Length > 0) return msg;
 
-                httpContext.Session.Remove("newPassword");
                 msg = Converter.StringToMD5(newpass, out string mkMd5);
                 if (msg.Length > 0) return $"Error convert to MD5: {msg}";
 
@@ -89,6 +91,7 @@ namespace API.Services
 
             msg = Converter.StringToMD5(userLogin.Password, out string mkMd5);
             if (msg.Length > 0) return ($"Error convert to MD5: {msg}", null);
+            if (user.Password.IsEmpty()) return ("Tài khoản chưa có mật khẩu. Đăng nhập lại bằng Google.", null);
             if (!user.Password.ToUpper().Equals(mkMd5.ToUpper())) return ("Mật khẩu không chính xác", null);
 
             if (user.IsVerified == false) return (ConstMessage.ACCOUNT_UNVERIFIED, null);
@@ -100,19 +103,20 @@ namespace API.Services
             await _context.SaveChangesAsync();
 
             var token = _jwtAuthen.GenerateJwtToken(user, httpContext);
-            var userDto = _mapper.Map<UserVM>(user);
+            await _jwtAuthen.GenerateRefreshToken(user, _context, httpContext);
+            var userDto = _mapper.Map<UserLoginVM>(user);
 
             return ("", new LoginResult
             {
-                Token = token,
-                User = userDto
+                //  Token = token,
+                Data = userDto
             });
         }
 
         public async Task<(string, LoginGoogleResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext)
         {
             bool hasPassword = true;
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.GoogleId == input.Id || x.Email == input.Email );
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.GoogleId == input.Id || x.Email == input.Email);
             if (user == null)
             {
                 var userid = Guid.NewGuid().ToString();
@@ -132,6 +136,7 @@ namespace API.Services
                     CreateAt = DateTime.Now,
                     CreateUser = userid,
                     LastLogin = DateTime.Now,
+                    LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString(),
                     Bio = input.ProfileLink,
                     Avatar = input.Picture ?? "default-avatar.png",
                 };
@@ -140,9 +145,7 @@ namespace API.Services
             }
             else                                              // improve this 
             {
-                user.Avatar = input.Picture ?? user.Avatar;           
-                user.Username = input.Name ?? user.Username;
-                user.GoogleId = input.Id;                                                                   //
+                user.GoogleId = input.Id;
                 user.LastLogin = DateTime.Now;
                 user.LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString();
                 hasPassword = !string.IsNullOrEmpty(user.Password);
@@ -150,33 +153,32 @@ namespace API.Services
             }
             await _context.SaveChangesAsync();
 
-            if (user.IsActive == false)
-            {
-                return ("Tài khoản đã bị vô hiệu hóa.", null);
-            }
+            if (user.IsActive == false) return ("Tài khoản đã bị vô hiệu hóa.", null);
 
             var token = _jwtAuthen.GenerateJwtToken(user, httpContext);
-            var userDto = _mapper.Map<UserVM>(user);
+            await _jwtAuthen.GenerateRefreshToken(user, _context, httpContext);
+            var userDto = _mapper.Map<UserLoginVM>(user);
 
             return ("", new LoginGoogleResult
             {
                 HasPassword = hasPassword,
-                Token = token,
-                User = userDto
+                //  Token = token,
+                Data = userDto
             });
         }
-        public async Task<string> DoLogout(HttpContext httpContext, string? phone)
+        public async Task<string> DoLogout(HttpContext httpContext, string? userid)
         {
-            var (msg, user) = await DoSearchByPhone(phone);
-            if (msg.Length > 0) return msg;
-            else if (user != null)
-            {
-                user.Status = (int)UserStatus.Inactive;
-                _context.Users.Update(user);
-                await _context.SaveChangesAsync();
-            }
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userid);
+            if (user == null) return "User not found!";
+
+            user.Status = (int)UserStatus.Inactive;
+            user.LastLogin = DateTime.Now;
+            user.RefreshToken = null;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
 
             httpContext.Response.Cookies.Delete("JwtToken");
+            httpContext.Response.Cookies.Delete("RefreshToken");
             httpContext.Session.Clear();
             return "";
         }
@@ -269,5 +271,25 @@ namespace API.Services
             return (string.Empty, user);
         }
 
+        //public async Task<string> GenerateRefreshToken(User user, HttpContext httpContext)
+        //{
+        //    var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+
+        //    if (user == null) throw new Exception("User not found");
+        //    user.RefreshToken = refreshToken;
+        //    user.ExpiryDateToken = DateTime.UtcNow.AddDays(7);
+
+        //    _context.Users.Update(user);
+        //    await _context.SaveChangesAsync();
+
+        //    httpContext.Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
+        //    {
+        //        HttpOnly = true,
+        //        Secure = true,  // Bật HTTPS trên production
+        //        SameSite = SameSiteMode.Lax,
+        //        Expires = DateTime.UtcNow.AddDays(7) // Refresh token sống 7 ngày
+        //    });
+        //    return refreshToken;
+        //}
     }
 }
