@@ -64,7 +64,7 @@ namespace API.ViewModels
         public string Title { get; set; } = string.Empty;
         public int CurrentPrice { get; set; }
         public int NewPrice { get; set; }
-        public string? ImageUrl { get; set; }
+        public string? ProductUrl { get; set; }
         public float Rating { get; set; }
         public int Sold { get; set; }
     }
@@ -76,9 +76,13 @@ namespace API.ViewModels
         public int CurrentPrice { get; set; }
         public int NewPrice { get; set; }
         public string? ImageUrl { get; set; }
+        public string? ProductUrl { get; set; }
+        public string? Description { get; set; }
         public float Rating { get; set; }
         public int Sold { get; set; }
         public int Stock {  get; set; }
         public DateTime? CreatedAt { get; set; }
+        public int CategoryId { get; set; }
+        public string? CategoryName { get; set; }
     }
 }

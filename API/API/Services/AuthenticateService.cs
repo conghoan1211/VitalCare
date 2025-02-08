@@ -3,9 +3,11 @@ using API.Helper;
 using API.Models;
 using API.Utilities;
 using API.ViewModels;
+using API.ViewModels.Token;
 using AutoMapper;
 using Azure;
 using InstagramClone.Utilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
@@ -13,7 +15,7 @@ namespace API.Services
 {
     public interface IAuthenticateService
     {
-        public Task<(string, LoginGoogleResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext);
+        public Task<(string, LoginResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext);
         public Task<(string, LoginResult?)> DoLogin(UserLogin userLogin, HttpContext httpContext);
         public Task<string> DoRegister(UserRegister userRegister);
         public Task<string> DoLogout(HttpContext httpContext, string userid);
@@ -23,7 +25,7 @@ namespace API.Services
         public Task<string> DoChangePassword(ChangePassword input);
         public Task<(string message, User? user)> DoSearchByEmail(string? email);
         public Task<(string message, User? user)> DoSearchByPhone(string? phone);
-        //public Task<string> GenerateRefreshToken(User user, HttpContext httpContext);
+        //public Task<string> ValidateRefreshToken(User user, HttpContext httpContext);
     }
 
     public class AuthenticateService : IAuthenticateService
@@ -102,18 +104,20 @@ namespace API.Services
             user.LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString();
             await _context.SaveChangesAsync();
 
-            var token = _jwtAuthen.GenerateJwtToken(user, httpContext);
-            await _jwtAuthen.GenerateRefreshToken(user, _context, httpContext);
+            var accessToken = _jwtAuthen.GenerateJwtToken(user, httpContext);
+            var refreshToken = await _jwtAuthen.GenerateRefreshToken(user, _context, httpContext);
             var userDto = _mapper.Map<UserLoginVM>(user);
 
             return ("", new LoginResult
             {
-                //  Token = token,
+                RefreshToken = refreshToken,
+                AccessToken = accessToken,
+                HasPassword = true,
                 Data = userDto
             });
         }
 
-        public async Task<(string, LoginGoogleResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext)
+        public async Task<(string, LoginResult?)> LoginByGoogle(GoogleUserInfo input, HttpContext httpContext)
         {
             bool hasPassword = true;
             var user = await _context.Users.FirstOrDefaultAsync(x => x.GoogleId == input.Id || x.Email == input.Email);
@@ -155,14 +159,15 @@ namespace API.Services
 
             if (user.IsActive == false) return ("Tài khoản đã bị vô hiệu hóa.", null);
 
-            var token = _jwtAuthen.GenerateJwtToken(user, httpContext);
-            await _jwtAuthen.GenerateRefreshToken(user, _context, httpContext);
+            var accessToken =  _jwtAuthen.GenerateJwtToken(user, httpContext);
+            var refreshToken = await _jwtAuthen.GenerateRefreshToken(user, _context, httpContext);
             var userDto = _mapper.Map<UserLoginVM>(user);
 
-            return ("", new LoginGoogleResult
+            return ("", new LoginResult
             {
                 HasPassword = hasPassword,
-                //  Token = token,
+                RefreshToken = refreshToken,
+                AccessToken = accessToken,
                 Data = userDto
             });
         }
@@ -186,8 +191,8 @@ namespace API.Services
         public async Task<string> DoRegister(UserRegister input)
         {
             string msg = "";
-            msg = _context.Users.CheckPhone(input.Phone);
-            if (msg.Length > 0) return msg;
+            //msg = _context.Users.CheckPhone(input.Phone);
+            //if (msg.Length > 0) return msg;
 
             msg = _context.Users.CheckEmail(input.Email);
             if (msg.Length > 0) return msg;
@@ -200,12 +205,9 @@ namespace API.Services
             {
                 UserId = userid,
                 Username = input.UserName,
-                Phone = input.Phone,
                 Email = input.Email,
                 Password = mkMd5,
                 RoleId = (int)Role.User,
-                Sex = input.Sex,
-                Dob = input.Dob,
                 Status = (int)UserStatus.Inactive,
                 IsActive = true,
                 IsDisable = false,
@@ -221,9 +223,24 @@ namespace API.Services
             return "";
         }
 
-        public Task<string> DoResetPassword(ResetPassword input)
+        public async Task<string> DoResetPassword(ResetPassword input)
         {
-            throw new NotImplementedException();
+            if (input.UserId == null) return "UserId is null";
+
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == input.UserId);
+            if (user == null) return "Người dùng không tồn tại.";
+
+            if (!user.Password.IsEmpty()) return "Tài khoản đã có mật khẩu.";
+
+            var msg = Converter.StringToMD5(input.RePassword, out string mkMd5);
+            if (msg.Length > 0) return $"Error convert to MD5: {msg}";
+
+            user.Password = mkMd5;
+            user.UpdateUser = user.UserId;
+            user.UpdateAt = DateTime.Now;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return "";
         }
 
         public async Task<string> DoVerifyOTP(string otp, HttpContext httpContext)
@@ -271,25 +288,17 @@ namespace API.Services
             return (string.Empty, user);
         }
 
-        //public async Task<string> GenerateRefreshToken(User user, HttpContext httpContext)
-        //{
-        //    var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        public async Task<UserToken?> ValidateRefreshToken(string refreshToken, string token)
+        {
+            var userRefresh = await _context.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
 
-        //    if (user == null) throw new Exception("User not found");
-        //    user.RefreshToken = refreshToken;
-        //    user.ExpiryDateToken = DateTime.UtcNow.AddDays(7);
+            if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.Now)
+            {
+                return null;
+            }
 
-        //    _context.Users.Update(user);
-        //    await _context.SaveChangesAsync();
-
-        //    httpContext.Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
-        //    {
-        //        HttpOnly = true,
-        //        Secure = true,  // Bật HTTPS trên production
-        //        SameSite = SameSiteMode.Lax,
-        //        Expires = DateTime.UtcNow.AddDays(7) // Refresh token sống 7 ngày
-        //    });
-        //    return refreshToken;
-        //}
+            var userToken = _jwtAuthen.ParseJwtToken(token);
+            return userToken;
+        }
     }
 }

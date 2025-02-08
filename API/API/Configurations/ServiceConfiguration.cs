@@ -29,6 +29,8 @@ namespace API.Configurations
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IOrderService, OrderService>();
+
 
 
 

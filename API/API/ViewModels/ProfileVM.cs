@@ -41,8 +41,11 @@ namespace API.ViewModels
 
     public class UpdateProfileModels
     {
+        [Required(ErrorMessage = "UserID cannot null!")]
+        public string? UserID { get; set; }
+
         [Required(ErrorMessage = "Tên hiển thị không được để trống")]
-        [StringLength(50, ErrorMessage = "Tên đăng nhập không được vượt quá 50 ký tự")]
+        [StringLength(30, ErrorMessage = "Tên đăng nhập không được vượt quá 30 ký tự")]
         public string? UserName { get; set; }
  
         [Required(ErrorMessage = "Số điện thoại không được để trống")]

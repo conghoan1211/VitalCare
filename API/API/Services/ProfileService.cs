@@ -14,7 +14,7 @@ namespace API.Services
         public Task<(string msg, ProfileVM? result)> GetProfile(string userID);
         public Task<(string, UpdateProfileModels?)> GetProfileUpdate(string userID);
         public Task<(string, string?)> DoChangeAvatar(string userid, UpdateAvatarVM input, HttpContext http);
-        public Task<string> UpdateProfile(string userID, UpdateProfileModels? updatedProfile, HttpContext http);
+        public Task<string> UpdateProfile( UpdateProfileModels? updatedProfile, HttpContext http);
     }
     public class ProfileService : IProfileService
     {
@@ -63,26 +63,24 @@ namespace API.Services
             return (string.Empty, profile);
         }
 
-        public async Task<string> UpdateProfile(string userID, UpdateProfileModels? updatedProfile, HttpContext http)
+        public async Task<string> UpdateProfile( UpdateProfileModels? updatedProfile, HttpContext http)
         {
             if (updatedProfile == null) return "Invalid profile data";
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userID);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == updatedProfile.UserID);
             if (user == null) return "User not found";
-
-            var oldProfile = new UpdateProfileModels
-            {
-                UserName = user.Username,
-                Sex = user.Sex,
-                Dob = user.Dob,
-            };
-
-            if (oldProfile.IsObjectEqual(updatedProfile)) return "";
 
             user.Sex = updatedProfile.Sex;
             user.Dob = updatedProfile.Dob;
             user.Username = updatedProfile.UserName;
             user.UpdateAt = DateTime.Now;
             user.Address = updatedProfile.Address;
+            user.ProvinceId = updatedProfile.ProvinceId;
+            user.DistrictId = updatedProfile.DistrictId;
+            user.Email = updatedProfile.Email;
+            user.Phone = updatedProfile.Phone;
+            user.DistrictName = updatedProfile.DistrictName;
+            user.ProvinceName = updatedProfile.ProvinceName;
+            
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 

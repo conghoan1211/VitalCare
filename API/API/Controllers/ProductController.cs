@@ -3,6 +3,7 @@ using API.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
 
 namespace API.Controllers
 {
@@ -17,36 +18,95 @@ namespace API.Controllers
         }
         #region User role
 
-        [HttpGet("GetDetail")]
+        [HttpGet("Detail")]
         public async Task<IActionResult> GetProductDetail(string productId)
         {
-            var (msg, product) = await _iProductService.GetDetail(productId);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok(product);
+            var (message, product) = await _iProductService.GetDetail(productId);
+            if (message.Length > 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message,
+                });
+            }
+            return Ok(new
+            {
+                success = true,
+                message = "Lấy danh sách thành công!",
+                data = product
+            });
         }
 
-        [HttpGet("GetList")]
+        [HttpGet("ListHome")]
         public async Task<IActionResult> GetProductList()
         {
-            var (msg, product) = await _iProductService.GetList();
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok(product);
+            var (message, product) = await _iProductService.GetList();
+            if (message.Length > 0)
+            {
+                return BadRequest(new  {
+                    success = false, message,
+                });
+            }
+            return Ok(new   {
+                success = true, message = "Lấy danh sách thành công!", data = product
+            });
+        }
+
+        [HttpGet("ListRelated")]
+        public async Task<IActionResult> GetListRelated(string idExist)
+        {
+            var (message, product) = await _iProductService.GetListRelated(idExist);
+            if (message.Length > 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message,
+                });
+            }
+            return Ok(new
+            {
+                success = true,
+                message = "Lấy danh sách thành công!",
+                data = product
+            });
         }
 
         [HttpGet("Search")]
         public async Task<IActionResult> DoSearch(string query)
         {
-            var (msg, product) = await _iProductService.DoSearch(query);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok(product);
+            var (message, product) = await _iProductService.DoSearch(query);
+            if (message.Length > 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message,
+                });
+            }
+            return Ok(new
+            {
+                success = true,
+                message = "Lấy danh sách thành công!",
+                data = product
+            });
         }
 
         [HttpGet("FilterByCategoryId")]
-        public async Task<IActionResult> GetProductList(int categoryId)
+        [EnableQuery]
+        public async Task<IActionResult> GetProductList(int categoryId, string? sortBy)
         {
-            var (msg, product) = await _iProductService.FilterByCategoryId(categoryId);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok(product);
+            var (message, product) = await _iProductService.FilterByCategoryId(categoryId, sortBy);
+            if (message.Length > 0)
+            {
+                return BadRequest(new {
+                    success = false,  message,
+                });
+            }
+            return Ok(new  {
+                success = true,  message = "Lấy danh sách thành công!", data = product
+            });
         }
         #endregion
 

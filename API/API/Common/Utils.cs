@@ -39,6 +39,12 @@ namespace API.Common
             Random random = new Random();
             return new string(Enumerable.Repeat(chars, 6).Select(s => s[random.Next(s.Length)]).ToArray());
         }
+        public static string GenRandomCharacter(int number)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            Random random = new Random();
+            return new string(Enumerable.Repeat(chars, number).Select(s => s[random.Next(s.Length)]).ToArray());
+        }
         public static string GetClientIpAddress(HttpContext _httpContext)
         {
             string result = _httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? "";

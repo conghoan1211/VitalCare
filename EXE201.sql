@@ -120,14 +120,34 @@ CREATE TABLE [Order] (
 	[Phone] [varchar](255) NOT NULL,
 	[Email] [varchar](255) NOT NULL,
 	[Address] [varchar](255) NOT NULL,
+	[SpecificAddress] [varchar](255) NOT NULL,
 	[Note] [varchar](255) NOT NULL,
+	[OrderDate] [datetime] NULL,
 	[UpdatedAt] [datetime] NULL,
-	[ShippedDate] [datetime] NULL,
 	[CreatedAt] [datetime] NULL,
-
+	[Status] [int] NOT NULL,  -- Trạng thái đơn hàng: 0 - Chờ xác nhận, 1 - Đang xử lý, 2 - Đang giao, 3 - Đã giao, 4 - Đã hủy
+	[PaymentMethod] [int] NOT NULL,  
+	[Total] [int] NOT NULL,
+	[ShipPrice] [int] NOT NULL,
+	 FOREIGN KEY ([UserID]) REFERENCES [User]([UserID])
 )
 
-
+CREATE TABLE [OrderDetail] (
+	[DetailID] [varchar](36) primary key NOT NULL,
+	[OrderID] [varchar](36) NOT NULL,
+	[ProductID] [varchar](36) NOT NULL ,
+	[Title] [nvarchar](255) NOT NULL,
+    [CurrentPrice] [int] NOT NULL,
+    [NewPrice] [int] NULL,
+    [ProductUrl] [nvarchar](500) NULL,
+    [CategoryName] [nvarchar](120) NOT NULL, 
+    [Quantity] [int] NOT NULL,   
+    [Total] [int] NOT NULL,
+    [CreateAt] [datetime] DEFAULT GETDATE(),
+    [UpdateAt] [datetime] NULL,
+    FOREIGN KEY ([OrderID]) REFERENCES [Order]([OrderID]) ON DELETE CASCADE,
+    FOREIGN KEY ([ProductID]) REFERENCES Product([ProductID])
+);
 CREATE INDEX IX_Users_Username_Email ON [User] (Username, Email);
 SELECT * 
 FROM sys.indexes
@@ -135,17 +155,17 @@ WHERE object_id = OBJECT_ID('User');
 
 
 
-ALTER TABLE [user]
-add  [ExpiryDateToken] [datetime] NULL;
 
 /*
 select * from likes
 select * from [user]
 select * from category
 
+ALTER TABLE [OrderDetail]
+add  [CategoryName] [nvarchar](120) NOT NULL, ;
 
-alter table Product 
-add	[UpdateUser] [nvarchar](36) NULL,
+alter table [OrderDetail] 
+drop column	[CategoryID] [nvarchar](36) NULL,
 
 ALTER TABLE Product
 ALTER COLUMN [NewPrice] INT NULL;

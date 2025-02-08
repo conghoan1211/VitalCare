@@ -7,7 +7,9 @@ using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2.Requests;
 using InstagramClone.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace API.Controllers
 {
@@ -141,6 +143,22 @@ namespace API.Controllers
             });
         }
 
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] UserRegister input)
+        {
+            var msg = await _iAuthenticate.DoRegister(input);
+            if (msg.Length > 0)
+            {
+                return BadRequest( new {
+                    success = false,  message = msg,
+                });
+            }
+
+            return Ok( new {
+                success = true, message = "Đăng ký thành công!",
+            });
+        }
+
         [HttpGet("validate-token")]
         public IActionResult ValidateToken()
         {
@@ -150,7 +168,7 @@ namespace API.Controllers
 
             var data = _jwtAuthen.ParseJwtToken(token);
             if (data == null)
-                return Unauthorized(new { isAuthenticated = false, message = "Token không hợp lệ hoặc đã hết hạn." });
+                return Unauthorized(new { isAuthenticated = false, message = "Token không hợp lệ hoặc đã hết hạn.", needRefresh = true });
 
             return Ok(new
             {
@@ -160,35 +178,25 @@ namespace API.Controllers
         }
 
         [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken()
+        public async Task<IActionResult> RefreshToken(string refreshToken)
         {
-            var refreshToken = Request.Cookies["JwtToken"]; // Lấy refresh token từ request body hoặc cookie
-
             if (string.IsNullOrEmpty(refreshToken))
-                return Unauthorized("Refresh token is missing");
+                return Unauthorized(new {message= "Refresh token is missing" });
 
             try
             {
-                var principal = _jwtAuthen.GetPrincipalFromExpiredToken(refreshToken); // Hàm này dùng để giải mã refresh token và lấy principal (ClaimsPrincipal)
-                var userId = principal.FindFirst("UserID");
-
-                var data = await _iAccService.GetById(userId.ToString());
-                if (data.msg.Length > 0) return Unauthorized(data.msg);
-
-                var expirationTime = principal.FindFirst("exp");
-                if (expirationTime == null || DateTime.UtcNow > DateTimeOffset.FromUnixTimeSeconds(long.Parse(expirationTime.Value)).UtcDateTime)
+                var userRefresh = await _context.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
+                if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.Now)
                 {
-                    return Unauthorized("Refresh token has expired");
+                    return Unauthorized(new { message = "Refresh token has expried" });
                 }
 
-                // Tạo lại access token mới
-                var newAccessToken = _jwtAuthen.GenerateJwtToken(data.user, HttpContext);
-                var newRefreshToken = _jwtAuthen.GenerateRefreshToken(data.user, _context, HttpContext);
+                _jwtAuthen.GenerateJwtToken(userRefresh, HttpContext);  // lưu token vào cookie
+                var newRefreshToken = _jwtAuthen.GenerateRefreshToken(userRefresh, _context, HttpContext);
 
                 return Ok(new
                 {
-                    AccessToken = newAccessToken,
-                    RefreshToken = newRefreshToken
+                    refreshToken = newRefreshToken
                 });
             }
             catch (Exception ex)
@@ -200,9 +208,30 @@ namespace API.Controllers
         [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePassword input)
         {
+            if (input == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Input cannot be null"
+                });
+            }
+
             var msg = await _iAuthenticate.DoChangePassword(input);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok(input.Password);
+            if (msg.Length > 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = msg,
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                message = "Thay đổi mật khẩu thành công!"
+            });
         }
 
         [HttpPost("ForgetPassword")]
@@ -225,7 +254,26 @@ namespace API.Controllers
                 message = "Mật khẩu mới đã được gửi qua email của bạn!"
             });
         }
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPassword data)
+        {
+            var msg = await _iAuthenticate.DoResetPassword(data);
+            if (msg.Length > 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = msg,
+                    errorCode = "Reset_Failed"
+                });
+            }
 
+            return Ok(new
+            {
+                success = true,
+                message = "Mật khẩu mới đã được thiết lập!"
+            });
+        }
         [HttpGet("logout")]
         public async Task<IActionResult> DoLogout(string userId)
         {

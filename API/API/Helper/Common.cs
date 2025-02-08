@@ -72,5 +72,14 @@ namespace API.Helper
             return url.StartsWith(UrlS3.UrlMain) ? url.Replace(UrlS3.UrlMain, "") : null;
         }
 
+        public static string GenerateOrderId()
+        {
+            DateTime now = DateTime.Now;
+            string orderId = now.ToString("yyMMddHH");
+            string chars = Utils.GenRandomCharacter(5);
+
+            return $"{orderId}{chars}";
+        }
+
     }
 }

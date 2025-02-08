@@ -4,13 +4,15 @@ namespace API.ViewModels
 {
     public class LoginResult
     {
-        // public string? Token { get; set; }
+        public bool? HasPassword { get; set; }
+        public string? RefreshToken  { get; set; }
+        public string? AccessToken { get; set; }
         public UserLoginVM? Data { get; set; }
     }
 
     public class LoginGoogleResult
     {
-        //   public string? Token { get; set; }
+        public string? AccessToken { get; set; }
         public bool? HasPassword { get; set; }
         public UserLoginVM? Data { get; set; }
     }

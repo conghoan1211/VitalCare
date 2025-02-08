@@ -32,7 +32,6 @@ namespace API.Helper
 
     }
 
-
     public enum NotifyType
     {
         FriendRequest = 0,
@@ -41,6 +40,21 @@ namespace API.Helper
         PostComment,
         CommentLike,
         Message
+    }
+
+    public enum OrderStatus
+    {
+        Pending = 0, // 0 - Chờ xác nhận
+        Processing,  // 1 - Đang xử lý
+        Delivering,  // 2 - Đang giao
+        Completed,   // 3 - Đã giao
+        Cancelled    // 4 - Đã hủy
+    }
+
+    public enum ProductStatus
+    {
+        Available = 0,
+        OutOfStock,
     }
 
     public enum UserStatus
@@ -52,6 +66,7 @@ namespace API.Helper
     }
 
 
+
     public enum Role
     {
         User = 0,
@@ -60,16 +75,8 @@ namespace API.Helper
 
     public enum TypeCateria
     {
-        Post = 1,
-        Product
-    }
-
-    public enum MessageStatus
-    {
-        NotSent = 0,
-        Sent,
-        Recieved,
-        Read,
+        Product = 1,
+        Post ,
     }
 
     public enum Gender
@@ -83,23 +90,6 @@ namespace API.Helper
     {
         Public = 0,
         Private,
-    }
-
-    public enum FriendStatus
-    {
-        Pending = 0,
-        Accepted,
-        Blocked,
-    }
-
-    public enum FollowStatus
-    {
-        Nothing = 0,
-        Following =1,
-        Followed =2,
-        Friend =3,
-        Block= 4,
-        Mute,
     }
 
 

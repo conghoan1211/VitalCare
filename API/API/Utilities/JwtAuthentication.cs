@@ -8,6 +8,7 @@ using API.ViewModels.Token;
 using API.Common;
 using API.Helper;
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace InstagramClone.Utilities
 {
@@ -16,7 +17,7 @@ namespace InstagramClone.Utilities
         public string GenerateJwtToken(User? user, HttpContext httpContext)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(ConfigManager.gI().SecretKey);
+            var key = Encoding.ASCII.GetBytes(ConfigManager.gI().SecretKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -25,7 +26,7 @@ namespace InstagramClone.Utilities
                     new Claim("Username", user.Username ?? ""),
                     new Claim("UserID", user.UserId.ToString() ?? ""),
                     new Claim("Avatar", user.Avatar.ToString() ?? ""),
-                    new Claim("Role", user.RoleId == (int)Role.Admin ? "Admin" : "User"),
+                    new Claim(ClaimTypes.Role, user.RoleId == (int)Role.Admin ? "Admin" : "User"),
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(ConfigManager.gI().ExpiresInMinutes),
                 Issuer = ConfigManager.gI().Issuer,
@@ -38,69 +39,50 @@ namespace InstagramClone.Utilities
             {
                 HttpOnly = true,
                 Secure = true, 
-                SameSite = SameSiteMode.Lax, 
+                SameSite = SameSiteMode.Lax,
+                MaxAge = TimeSpan.FromDays(7) // Token sống trong 7 ngày
             });
 
             return tokenHandler.WriteToken(token);
         }
 
-        public string ParseCurrentToken(ClaimsPrincipal user, out UserToken userToken)
-        {
-            userToken = null;
-            if (user.Identity is not ClaimsIdentity claimsIdentity || !user.Identity.IsAuthenticated)
-            {
-                return "User has not authenticated";
-            }
-            var claims = claimsIdentity.Claims;
-            var username = claims.FirstOrDefault(c => c.Type == "Username")?.Value;
-            var userID = claims.FirstOrDefault(c => c.Type == "UserID")?.Value;
-            var avatar = claims.FirstOrDefault(x => x.Type == "Avatar")?.Value;
-            //     var email = claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-            var roleID = claims.FirstOrDefault(c => c.Type == "Role")?.Value;
-
-            userToken = new UserToken
-            {
-                UserName = username,
-                UserID = userID.ToGuid(),
-                Avatar = avatar,
-                RoleID = roleID,
-            };
-            return "";
-        }
-
-        public UserToken ParseJwtToken(string token)
+        public UserToken? ParseJwtToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(ConfigManager.gI().SecretKey); // Your encryption key for token validation
+            var key = Encoding.ASCII.GetBytes(ConfigManager.gI().SecretKey);
 
-            // Validate the token
-            tokenHandler.ValidateToken(token, new TokenValidationParameters
+            try
             {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidIssuer = ConfigManager.gI().Issuer,
-                ValidAudience = ConfigManager.gI().Audience,
-                ClockSkew = TimeSpan.Zero, // Disable the default 5 min leeway
-            }, out SecurityToken validatedToken);
+                var claimsPrincipal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = ConfigManager.gI().Issuer,
+                    ValidAudience = ConfigManager.gI().Audience,
+                    ClockSkew = TimeSpan.Zero,
+                    RequireExpirationTime = true // Đảm bảo kiểm tra thời gian hết hạn
+                }, out SecurityToken validatedToken);
 
-            var jwtToken = (JwtSecurityToken)validatedToken;
+                var jwtToken = (JwtSecurityToken)validatedToken;
+                var username = jwtToken.Claims.FirstOrDefault(x => x.Type == "Username")?.Value;
+                var userId = jwtToken.Claims.FirstOrDefault(x => x.Type == "UserID")?.Value;
+                var avatar = jwtToken.Claims.FirstOrDefault(x => x.Type == "Avatar")?.Value;
+                var roleId = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
 
-            // Extract user information from the token claims
-            var username = jwtToken.Claims.FirstOrDefault(x => x.Type == "Username")?.Value;
-            var userId = jwtToken.Claims.FirstOrDefault(x => x.Type == "UserID")?.Value;
-            var avatar = jwtToken.Claims.FirstOrDefault(x => x.Type == "Avatar")?.Value;
-            var roleId = jwtToken.Claims.FirstOrDefault(x => x.Type == "Role")?.Value;
-
-            // Create a UserToken object with the extracted data
-            return new UserToken
+                return new UserToken
+                {
+                    UserName = username,
+                    UserID = userId.ToGuid(),
+                    Avatar = avatar,
+                    RoleID = roleId,
+                };
+            }
+            catch (SecurityTokenExpiredException)
             {
-                UserName = username,
-                UserID = userId.ToGuid(),
-                Avatar = avatar,
-                RoleID = roleId,
-            };
+                return null;  
+            }
         }
 
         public bool ValidateJwtToken(string token)
@@ -137,14 +119,6 @@ namespace InstagramClone.Utilities
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
-
-            httpContext.Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,  // Bật HTTPS trên production
-                SameSite = SameSiteMode.Lax,
-                Expires = DateTime.UtcNow.AddDays(7) // Refresh token sống 7 ngày
-            });
             return refreshToken;
         }
 
@@ -158,7 +132,8 @@ namespace InstagramClone.Utilities
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ValidateLifetime = false, // Chúng ta tắt kiểm tra thời gian sống ở đây vì token đã hết hạn
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigManager.gI().SecretKey))
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(ConfigManager.gI().SecretKey))
                 }, out var validatedToken);
 
                 return principal;

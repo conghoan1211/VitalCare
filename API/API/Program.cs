@@ -1,5 +1,6 @@
 ﻿using API.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.OData;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
@@ -20,6 +21,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpClient();
 
+// Cấu hình OData
+builder.Services.AddControllers().AddOData(options =>
+    options.Select().Filter().OrderBy().Expand().SetMaxTop(100).Count());
 // Add session 
 builder.Services.AddSession(options =>
 {

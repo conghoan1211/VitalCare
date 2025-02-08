@@ -21,15 +21,17 @@ public partial class Exe201Context : DbContext
 
     public virtual DbSet<Like> Likes { get; set; }
 
+    public virtual DbSet<Order> Orders { get; set; }
+
+    public virtual DbSet<OrderDetail> OrderDetails { get; set; }
+
     public virtual DbSet<Post> Posts { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("server =localhost; database = exe201;uid=sa;pwd=hoancute;TrustServerCertificate=true");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,6 +100,84 @@ public partial class Exe201Context : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Likes__UserID__3E52440B");
+        });
+
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasKey(e => e.OrderId).HasName("PK__Order__C3905BAFC17B78E9");
+
+            entity.ToTable("Order");
+
+            entity.Property(e => e.OrderId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("OrderID");
+            entity.Property(e => e.Address)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.Note)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.OrderDate).HasColumnType("datetime");
+            entity.Property(e => e.Phone)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.SpecificAddress)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("UserID");
+            entity.Property(e => e.Username)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.User).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Order__UserID__49C3F6B7");
+        });
+
+        modelBuilder.Entity<OrderDetail>(entity =>
+        {
+            entity.HasKey(e => e.DetailId).HasName("PK__OrderDet__135C314DCFC1BA6C");
+
+            entity.ToTable("OrderDetail");
+
+            entity.Property(e => e.DetailId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("DetailID");
+            entity.Property(e => e.CategoryName).HasMaxLength(120);
+            entity.Property(e => e.CreateAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.OrderId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("OrderID");
+            entity.Property(e => e.ProductId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("ProductID");
+            entity.Property(e => e.ProductUrl).HasMaxLength(500);
+            entity.Property(e => e.Title).HasMaxLength(255);
+            entity.Property(e => e.UpdateAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
+                .HasForeignKey(d => d.OrderId)
+                .HasConstraintName("FK__OrderDeta__Order__4D94879B");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.OrderDetails)
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__OrderDeta__Produ__4E88ABD4");
         });
 
         modelBuilder.Entity<Post>(entity =>

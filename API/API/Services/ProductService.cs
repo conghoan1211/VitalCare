@@ -16,7 +16,8 @@ namespace API.Services
         public Task<string> DoToggleActive(string productId, bool active);
         public Task<string> DoDeleteSoft(string productId, string userid);
         public Task<(string, List<ProductListVM>?)> DoSearch(string query);
-        public Task<(string, List<ProductListVM>?)> FilterByCategoryId(int categoryId);
+        public Task<(string, List<ProductListVM>?)> FilterByCategoryId(int categoryId, string? sortBy);
+        public Task<(string, List<ProductListVM>?)> GetListRelated(string idExist);
 
     }
 
@@ -64,7 +65,21 @@ namespace API.Services
             var list = await _context.Products.Include(x => x.Category)
                 .Where(x => x.IsActive == true && x.IsDeleted == false)
                 .ToListAsync();
-            if (list.IsNullOrEmpty()) return ("No product available", null);
+
+            if (!list.Any()) return ("No product available", null);
+
+            var listMapper = _mapper.Map<List<ProductListVM>>(list);
+            return ("", listMapper);
+        }
+
+        public async Task<(string, List<ProductListVM>?)> GetListRelated(string idExist)
+        {
+            var list = await _context.Products.Include(x => x.Category)
+           .Where(x => x.IsActive == true && x.IsDeleted == false && x.ProductId != idExist)
+           .OrderBy(x => Guid.NewGuid())
+           .Take(10).ToListAsync();
+
+            if (!list.Any()) return ("No product available", null);
 
             var listMapper = _mapper.Map<List<ProductListVM>>(list);
             return ("", listMapper);
@@ -169,24 +184,32 @@ namespace API.Services
             var list = await _context.Products.Include(x => x.Category)
                 .Where(x => x.Category.TypeObject == (int)TypeCateria.Product
                     && x.IsActive == true && x.IsDeleted == false
-                    && (x.Title.RemoveMarkVNToLower().Contains(query.RemoveMarkVNToLower()) || x.Category.Name.RemoveMarkVNToLower().Contains(query.RemoveMarkVNToLower()))
+                    && (x.Title.ToLower().Contains(query.ToLower()) || x.Category.Name.ToLower().Contains(query.ToLower()))
                 )
                 .ToListAsync();
-            if (list == null || !list.Any()) return ("No post available!", null);
+            if (list == null || !list.Any()) return ("Không tìm thấy sản phẩm nào!", null);
 
             var postMapper = _mapper.Map<List<ProductListVM>>(list);
             return ("", postMapper);
         }
-
-        public async Task<(string, List<ProductListVM>?)> FilterByCategoryId(int categoryId)
+        
+        public async Task<(string, List<ProductListVM>?)> FilterByCategoryId(int categoryId, string? sortBy)
         {
             var list = await _context.Products.Include(x => x.Category)
-              .Where(x => x.Category.TypeObject == (int)TypeCateria.Product
-                  && x.IsActive == true && x.IsDeleted == false 
-                  && x.CategoryId == categoryId
+              .Where( x => x.IsActive == true && x.IsDeleted == false 
+                  && (categoryId == 0 || x.CategoryId == categoryId)
               )
               .ToListAsync();
-            if (list == null || !list.Any()) return ("No post available!", null);
+            if (list == null || !list.Any()) return ("Chưa có sản phẩm!", null);
+
+            list = sortBy switch
+            {
+                "newest" => list.OrderByDescending(x => x.CreatedAt).ToList(),
+                "bestseller" => list.OrderByDescending(x => x.Sold).ToList(),
+                "price_asc" => list.OrderBy(x => x.NewPrice).ToList(),
+                "price_desc" => list.OrderByDescending(x => x.NewPrice).ToList(),
+                _ => list  
+            };
 
             var postMapper = _mapper.Map<List<ProductListVM>>(list);
             return ("", postMapper);

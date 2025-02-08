@@ -52,12 +52,27 @@ namespace API.Controllers
         }
 
 
-        [HttpPost("UpdateUser")]
-        public async Task<IActionResult> UpdateProfile(string userID, UpdateProfileModels? updatedProfile)
+        [HttpPost("UpdateProfile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileModels updatedProfile)
         {
-            string msg = await _iProfileService.UpdateProfile(userID, updatedProfile, HttpContext);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok("Update Profile Successfully!");
+            if (updatedProfile == null)
+            {
+                return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errorCode = "INVALID_REQUEST" });
+            }
+            string message = await _iProfileService.UpdateProfile(updatedProfile, HttpContext);
+            if (message.Length > 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message,
+                });
+            }
+            return Ok(new
+            {
+                success = true,
+                message = "Update Profile Successfully!",
+            });
         }
 
         [HttpPost("ChangeAvatar")]

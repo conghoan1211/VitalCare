@@ -1,4 +1,5 @@
-﻿using API.Services;
+﻿using API.Models;
+using API.Services;
 using API.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,12 +16,24 @@ namespace API.Controllers
             _iCategoryService = iCategoryService;
         }
 
-        [HttpGet("GetList")]
+        [HttpGet("List")]
         public async Task<IActionResult> GetCategoryList(bool? isActive, int? typeCateria = null)
         {
-            var (msg, list) = await _iCategoryService.GetList(isActive, typeCateria);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok(list);
+            var (message, list) = await _iCategoryService.GetList(isActive, typeCateria);
+            if (message.Length > 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message,
+                });
+            }
+            return Ok(new
+            {
+                success = true,
+                message = "Lấy danh sách thành công!",
+                data = list
+            });
         }
 
         [HttpGet("GetDetail")]
