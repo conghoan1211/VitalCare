@@ -1,4 +1,5 @@
-﻿using API.Configurations;
+﻿using API.Common;
+using API.Configurations;
 using API.Models;
 using API.Services;
 using API.Utilities;
@@ -160,22 +161,40 @@ namespace API.Controllers
         }
 
         [HttpGet("validate-token")]
-        public IActionResult ValidateToken()
+        public IActionResult ValidateToken(string refreshToken)
         {
             var token = Request.Cookies["JwtToken"];
             if (string.IsNullOrEmpty(token))
                 return Unauthorized(new { message = "No token found." });
 
             var data = _jwtAuthen.ParseJwtToken(token);
-            if (data == null)
-                return Unauthorized(new { isAuthenticated = false, message = "Token không hợp lệ hoặc đã hết hạn.", needRefresh = true });
+            if (data == null) // Token đã hết hạn
+            {
+                if (!string.IsNullOrEmpty(refreshToken))  
+                {
+                    var userRefresh = _context.Users.FirstOrDefault(x => x.RefreshToken == refreshToken);
+                    if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.Now)
+                    {
+                        return Unauthorized(new { message = "Refresh token has expired" });
+                    }
+                    _jwtAuthen.GenerateJwtToken(userRefresh, HttpContext);
+                    var newRefreshToken = _jwtAuthen.GenerateRefreshToken(userRefresh, _context, HttpContext);
+
+                    return Ok(new
+                    {
+                        refreshToken = newRefreshToken,
+                        isAuthenticated = true,
+                    });
+                }
+                return Unauthorized(new { message = "Token không hợp lệ hoặc đã hết hạn." });
+            }
 
             return Ok(new
             {
-                isAuthenticated = true,
-                data
+                isAuthenticated = true,  data
             });
         }
+
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken(string refreshToken)

@@ -10,10 +10,10 @@ namespace API.Services
 {
     public interface IOrderService
     {
-        public Task<string> CreateOrder(InsertOrderVM? input);
+        public Task<(string, OrderVM?)> CreateOrder(InsertOrderVM? input);
         public Task<(string, List<OrderVM>?)> GetAll(int status);
         public Task<string> SetStatus(string orderId, int status);
-        public Task<(string, List<OrderProfileVM>?)> GetOrderByUserId(string userId);
+        public Task<(string, List<OrderVM>?)> GetOrderByUserId(string userId);
 
     }
     public class OrderService : IOrderService
@@ -27,9 +27,9 @@ namespace API.Services
             _context = context;
         }
 
-        public async Task<string> CreateOrder(InsertOrderVM? input)
+        public async Task<(string, OrderVM?)> CreateOrder(InsertOrderVM? input)
         {
-            if (input == null) return "Dữ liệu đầu vào không hợp lệ.";
+            if (input == null) return ("Dữ liệu đầu vào không hợp lệ.", null);
             using (var transaction = _context.Database.BeginTransaction())
             {
                 try
@@ -44,7 +44,7 @@ namespace API.Services
                         Address = $"{input.DistrictName} - {input.ProvinceName}",
                         SpecificAddress = input.SpecificAddress,
                         Note = input.Note,
-                        Status = (int)OrderStatus.Pending, 
+                        Status = (int)OrderStatus.Pending,
                         PaymentMethod = input.PaymentMethod,
                         Total = input.Total,
                         ShipPrice = input.ShipPrice,
@@ -74,25 +74,45 @@ namespace API.Services
                             CurrentPrice = product.CurrentPrice,
                             NewPrice = product.NewPrice,
                             ProductUrl = productData.ProductUrl,
-                            Total = product.Quantity * product.CurrentPrice
+                            Total = product.Quantity * (int)product.NewPrice,
                         };
 
                         productData.Stock -= product.Quantity;
                         productData.Sold += product.Quantity;
                         productData.Status = productData.Stock > 0 ? (int)ProductStatus.Available : (int)ProductStatus.OutOfStock;
-                        
+
                         _context.Products.Update(productData);
                         await _context.OrderDetails.AddAsync(orderDetail);
                     }
 
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    return "";
+
+                    OrderVM orderVm = new OrderVM
+                    {
+                        OrderId = order.OrderId,
+                        Address = order.Address,
+                        SpecificAddress = order.SpecificAddress,
+                        CreatedAt = order.CreatedAt,
+                        Email = order.Email,
+                        Note = order.Note,
+                        OrderDate = order.OrderDate,
+                        PaymentMethod = order.PaymentMethod,
+                        Phone = order.Phone,
+                        ShipPrice = order.ShipPrice,
+                        Status = order.Status,
+                        Total = order.Total,
+                        UserID = order.UserId,
+                        UserName = order.Username,
+                        Products = input.Products
+                    };
+
+                    return (string.Empty, orderVm);
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    return $"Lỗi khi tạo đơn hàng: {ex.Message}";
+                    return ($"Lỗi khi tạo đơn hàng: {ex.Message}", null);
                 }
             }
         }
@@ -117,12 +137,12 @@ namespace API.Services
                     Total = order.Total,
                     ShipPrice = order.ShipPrice,
                     CreatedAt = order.CreatedAt,
-                    OrderDate = order.OrderDate, 
+                    OrderDate = order.OrderDate,
                     Products = order.OrderDetails.Select(detail => new OrderDetailVM
                     {
                         ProductID = detail.ProductId,
-                        Title = detail.Product.Title, 
-                        CategoryName = detail.Product.Category.Name, 
+                        Title = detail.Product.Title,
+                        CategoryName = detail.Product.Category.Name,
                         CurrentPrice = detail.CurrentPrice,
                         NewPrice = detail.NewPrice,
                         ProductUrl = detail.Product.ProductUrl,
@@ -139,8 +159,8 @@ namespace API.Services
         public async Task<string> SetStatus(string orderId, int status)
         {
             var order = await _context.Orders
-                .Include(o => o.OrderDetails)  
-                .ThenInclude(od => od.Product)  
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
                 .FirstOrDefaultAsync(x => x.OrderId == orderId);
 
             if (order == null) return "Không tìm thấy đơn hàng.";
@@ -154,7 +174,7 @@ namespace API.Services
                     if (product != null)
                     {
                         product.Stock += orderDetail.Quantity;
-                        if (product.Sold > orderDetail.Quantity)  product.Sold -= orderDetail.Quantity;
+                        if (product.Sold > orderDetail.Quantity) product.Sold -= orderDetail.Quantity;
 
                         product.Status = product.Stock > 0 ? (int)ProductStatus.Available : (int)ProductStatus.OutOfStock;
                         _context.Products.Update(product);
@@ -167,31 +187,43 @@ namespace API.Services
             return "";
         }
 
-        public async Task<(string, List<OrderProfileVM>?)> GetOrderByUserId(string userId) 
+        public async Task<(string, List<OrderVM>?)> GetOrderByUserId(string userId)
         {
             var orders = await _context.Orders
-                .Where(x => x.UserId == userId)
-                .OrderByDescending(x => x.CreatedAt)
-                .Select(order => new OrderProfileVM
-                {
-                    OrderId = order.OrderId,
-                    Status = order.Status,
-                    Total = order.Total,
-                    ShipPrice = order.ShipPrice,
-                    Note = order.Note,
-                    Products = order.OrderDetails.Select(detail => new OrderDetailVM
-                    {
-                        ProductID = detail.ProductId,
-                        Title = detail.Product.Title,
-                        CategoryName = detail.Product.Category.Name,
-                        CurrentPrice = detail.CurrentPrice,
-                        NewPrice = detail.NewPrice,
-                        ProductUrl = detail.Product.ProductUrl,
-                        Quantity = detail.Quantity,
-                    }).ToList()
-                }).ToListAsync();
+                 .Where(x => x.UserId == userId)
+                 .OrderByDescending(x => x.CreatedAt)
+                 .Select(order => new OrderVM
+                 {
+                     OrderId = order.OrderId,
+                     UserID = order.UserId,
+                     UserName = order.Username,
+                     Phone = order.Phone,
+                     Email = order.Email,
+                     Address = order.Address,
+                     SpecificAddress = order.SpecificAddress,
+                     Note = order.Note,
+                     Status = order.Status,
+                     PaymentMethod = order.PaymentMethod,
+                     Total = order.Total,
+                     ShipPrice = order.ShipPrice,
+                     CreatedAt = order.CreatedAt,
+                     OrderDate = order.OrderDate,
+                     Products = order.OrderDetails.Select(detail => new OrderDetailVM
+                     {
+                         ProductID = detail.ProductId,
+                         Title = detail.Product.Title,
+                         CategoryName = detail.Product.Category.Name,
+                         CurrentPrice = detail.CurrentPrice,
+                         NewPrice = detail.NewPrice,
+                         ProductUrl = detail.Product.ProductUrl,
+                         Quantity = detail.Quantity,
+                         TotalPrice = detail.Total
+                     }).ToList()
+                 }).ToListAsync();
 
-            return ("", null);
+            if (orders == null || orders.Count == 0) return ("Không tìm thấy đơn hàng.", null);
+
+            return ("", orders);
         }
 
     }

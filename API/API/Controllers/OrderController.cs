@@ -19,12 +19,12 @@ namespace API.Controllers
         [HttpPost("CreateOrder")]
         public async Task<IActionResult> CreateOrder([FromBody] InsertOrderVM input)
         {
-            var result = await _iOrderService.CreateOrder(input);
-            if (result.Length > 0)
+            var (message, data) = await _iOrderService.CreateOrder(input);
+            if (message.Length > 0)
             {
-                return BadRequest(new { success = false, message = result, errorCode = "CREATE_ORDER_FAILED" });
+                return BadRequest(new { success = false, message, errorCode = "CREATE_ORDER_FAILED" });
             }
-            return Ok(new { success = true, message = "Tạo đơn hàng thành công." });
+            return Ok(new { success = true, message = "Tạo đơn hàng thành công." , data });
         }
 
         [HttpGet("GetAllOrder")]
@@ -56,9 +56,9 @@ namespace API.Controllers
             var (message, orders) = await _iOrderService.GetOrderByUserId(userId);
             if (message.Length > 0)
             {
-                return BadRequest(new { success = false, message, errorCode = "CREATE_ORDER_FAILED" });
+                return BadRequest(new { success = false, message, data = orders });
             }
-            return Ok(new { success = true, message = "Tạo đơn hàng thành công.", data = orders });
+            return Ok(new { success = true, message = "Lấy đơn hàng thành công.", data = orders });
         }
     }
 }

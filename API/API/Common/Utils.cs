@@ -41,7 +41,7 @@ namespace API.Common
         }
         public static string GenRandomCharacter(int number)
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             Random random = new Random();
             return new string(Enumerable.Repeat(chars, number).Select(s => s[random.Next(s.Length)]).ToArray());
         }

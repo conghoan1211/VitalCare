@@ -119,9 +119,9 @@ CREATE TABLE [Order] (
 	[Username] [varchar](255) NOT NULL,
 	[Phone] [varchar](255) NOT NULL,
 	[Email] [varchar](255) NOT NULL,
-	[Address] [varchar](255) NOT NULL,
-	[SpecificAddress] [varchar](255) NOT NULL,
-	[Note] [varchar](255) NOT NULL,
+	[Address] [nvarchar](255) NOT NULL,
+	[SpecificAddress] [nvarchar](255) NOT NULL,
+	[Note] [nvarchar](255) NOT NULL,
 	[OrderDate] [datetime] NULL,
 	[UpdatedAt] [datetime] NULL,
 	[CreatedAt] [datetime] NULL,
@@ -152,8 +152,6 @@ CREATE INDEX IX_Users_Username_Email ON [User] (Username, Email);
 SELECT * 
 FROM sys.indexes
 WHERE object_id = OBJECT_ID('User');
-
-
 
 
 /*
