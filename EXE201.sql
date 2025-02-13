@@ -116,7 +116,7 @@ CREATE TABLE  [Likes](
 CREATE TABLE [Order] (
 	[OrderID] [varchar](36) primary key NOT NULL,
 	[UserID] [varchar](36) NOT NULL,
-	[Username] [varchar](255) NOT NULL,
+	[Username] [nvarchar](255) NOT NULL,
 	[Phone] [varchar](255) NOT NULL,
 	[Email] [varchar](255) NOT NULL,
 	[Address] [nvarchar](255) NOT NULL,
@@ -154,6 +154,15 @@ FROM sys.indexes
 WHERE object_id = OBJECT_ID('User');
 
 
+
+SELECT * 
+FROM Posts p
+JOIN Category c ON p.CategoryID = c.ID
+WHERE c.TypeObject = 2 AND p.Privacy = 0;
+DBCC CHECKIDENT ('Category', RESEED, 6);
+
+INSERT INTO Category (Name, TypeObject) VALUES (N'Y tế', 2);
+
 /*
 select * from likes
 select * from [user]
@@ -170,6 +179,9 @@ ALTER COLUMN [NewPrice] INT NULL;
 
 ALTER TABLE Product
 ALTER COLUMN [ImageUrl] NVARCHAR(max) not NULL;
+
+ALTER TABLE [Order]
+ALTER COLUMN [Username] NVARCHAR(255) NOT NULL;
 
 ALTER TABLE posts
 add	FOREIGN KEY([CategoryID]) REFERENCES [Category] ([ID])

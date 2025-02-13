@@ -5,15 +5,17 @@ using API.ViewModels;
 using AutoMapper;
 using InstagramClone.Utilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace API.Services
 {
     public interface IPostService
     {
-        public Task<(string, List<PostListVM>?)> GetList();
-        public Task<(string, PostVM?)> GetDetail(string postId);
+        public Task<(string, List<PostListVM>?)> GetList(int privacy);
+        public Task<(string, PostDetailVM?)> GetDetail(string postId);
         public Task<string> InsertUpdatePost(InsertUpdatePost? input, string userId);
         public Task<string> DoChangePrivacy(string postId, int privacy);
+        public Task<string> DoDeletePost(string postId);
 
     }
 
@@ -21,19 +23,19 @@ namespace API.Services
     {
         private readonly IMapper _mapper;
         private readonly Exe201Context _context;
-        private readonly JwtAuthentication _jwtAuthen;
+        private readonly IAmazonS3Service _s3Service;
 
-        public PostService(IMapper mapper, Exe201Context context, JwtAuthentication jwtAuthen)
+        public PostService(IMapper mapper, Exe201Context context, IAmazonS3Service s3Service)
         {
             _mapper = mapper;
             _context = context;
-            _jwtAuthen = jwtAuthen;
+            _s3Service = s3Service;
         }
 
-        public async Task<(string, List<PostListVM>?)> GetList()
+        public async Task<(string, List<PostListVM>?)> GetList(int privacy)
         {
             var list = await _context.Posts.Include(x => x.Category)
-                .Where(x => x.Category.TypeObject == (int)TypeCateria.Post && x.Privacy == (int)PostPrivacy.Public)
+                .Where(x => x.Category.TypeObject == (int)TypeCateria.Post && (privacy == -1 || x.Privacy == privacy))
                 .ToListAsync();
             if (list == null || !list.Any()) return ("No post available!", null);
 
@@ -42,58 +44,49 @@ namespace API.Services
             return ("", postMapper);
         }
 
-        public async Task<(string, PostVM?)> GetDetail(string postId)
+        public async Task<(string, PostDetailVM?)> GetDetail(string postId)
         {
-            var post = await _context.Posts.Include(x => x.Category)
+            var post = await _context.Posts.Include(x => x.Category).Include(x => x.User)
                 .Where(x => x.Category.TypeObject == (int)TypeCateria.Post)
+                .Select(x => new PostDetailVM
+                {
+                    PostId = x.PostId,
+                    Title = x.Title,
+                    Author = x.Author,
+                    CategoryId = x.CategoryId,
+                    CategoryName = x.Category.Name,
+                    Likes = x.Likes,
+                    Comments = x.Comments,
+                    Views = x.Views,
+                    Tags = x.Tags,
+                    Content = x.Content,
+                    CreatedAt = x.CreatedAt,
+                    Thumbnail = x.Thumbnail,
+                    Username = x.User.Username,
+                    Avatar = x.User.Avatar,
+                })
                 .FirstOrDefaultAsync(x => x.PostId == postId);
             if (post == null) return ("No post available!", null);
 
-            var postMapper = _mapper.Map<PostVM>(post);
-
-            return ("", postMapper);
+            return ("", post);
         }
 
         public async Task<string> InsertUpdatePost(InsertUpdatePost? input, string userId)
         {
             if (userId == null) return "User id is null";
+            string thumbnailUrl = "";
 
-            string? msg = "", thumbnailUrl = "";
-            var file = input.Thumbnail;
-            if (file != null)
+            if (string.IsNullOrEmpty(input.PostId))
             {
-                (msg, thumbnailUrl) = await Utils.GetUrlImage(file);
-                if (msg.Length > 0) return msg;
-            }
+                input.PostId = Guid.NewGuid().ToString();
 
-            if (!input.PostId.IsEmpty())
-            {
-                var post = await _context.Posts.FirstOrDefaultAsync(x => x.PostId == input.PostId);
-                if (post == null) return "No post available!";
-
-                post.Thumbnail = thumbnailUrl ?? "";
-                post.Author = input.Author;
-                post.CategoryId = input.CategoryId;
-                post.Content = input.Content;
-                post.Title = input.Title;
-                post.UpdatedAt = DateTime.Now;
-                post.UpdateUser = input.UpdateUser;
-                post.IsComment = input.IsComment;
-                post.PinTop = input.PinTop;
-                post.Privacy = input.Privacy;
-                post.Tags = input.Tags;
-                post.VideoUrl = input.VideoUrl;
-
-                _context.Posts.Update(post);
-            }
-            else
-            {
+                string key = $"{UrlS3.Post}{input.PostId}";
+                thumbnailUrl = await _s3Service.UploadFileAsync(key, input.Thumbnail);
                 var newPost = new Post
                 {
                     PostId = Guid.NewGuid().ToString(),
-                    UserId = input.UserId,
+                    UserId = userId,
                     Title = input.Title,
-                    VideoUrl = input.VideoUrl,
                     IsComment = input.IsComment,
                     Author = input.Author,
                     CategoryId = input.CategoryId,
@@ -104,12 +97,42 @@ namespace API.Services
                     PinTop = input.PinTop,
                     Tags = input.Tags,
                     Content = input.Content,
-                    CreateUser = input.CreateUser,
+                    CreateUser = userId,
                     CreatedAt = DateTime.Now,
                     Privacy = input.Privacy,
                     Thumbnail = thumbnailUrl ?? "",
                 };
                 await _context.Posts.AddAsync(newPost);
+            }
+            else
+            {
+                var post = await _context.Posts.FirstOrDefaultAsync(x => x.PostId == input.PostId);
+                if (post == null) return "No post available!";
+
+                if (input.Thumbnail != null)
+                {
+                    if (post.Thumbnail != null)
+                    {
+                        string folderKey = $"{UrlS3.Post}{input.PostId}/";
+                        await _s3Service.DeleteFolderAsync(folderKey);
+                    }
+                    string key = $"{UrlS3.Product}{input.PostId}";
+                    thumbnailUrl = await _s3Service.UploadFileAsync(key, input.Thumbnail);
+                    post.Thumbnail = thumbnailUrl;
+                }
+
+                post.Thumbnail = thumbnailUrl ?? "";
+                post.Author = input.Author;
+                post.CategoryId = input.CategoryId;
+                post.Content = input.Content;
+                post.Title = input.Title;
+                post.UpdatedAt = DateTime.Now;
+                post.UpdateUser = userId;
+                post.IsComment = input.IsComment;
+                post.PinTop = input.PinTop;
+                post.Privacy = input.Privacy;
+                post.Tags = input.Tags;
+                _context.Posts.Update(post);
             }
             await _context.SaveChangesAsync();
             return "";
@@ -130,7 +153,7 @@ namespace API.Services
         {
             var list = await _context.Posts.Include(x => x.Category)
                 .Where(x => x.Category.TypeObject == (int)TypeCateria.Post && x.Privacy == (int)PostPrivacy.Public
-                && (x.Title.RemoveMarkVNToLower().Contains(title.RemoveMarkVNToLower()) || x.Category.Name.RemoveMarkVNToLower().Contains(title.RemoveMarkVNToLower()))
+                && (x.Title.ToLower().Contains(title.ToLower()) || x.Category.Name.ToLower().Contains(title.ToLower()))
                 )
                 .ToListAsync();
             if (list == null || !list.Any()) return ("No post available!", null);
@@ -140,37 +163,31 @@ namespace API.Services
             return ("", postMapper);
         }
 
-        //public async Task<string> DoDeletePost(string postId)
-        //{
-        //    using var transaction = await _context.Database.BeginTransactionAsync();
+        public async Task<string> DoDeletePost(string postId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var post = await _context.Posts.FirstOrDefaultAsync(x => x.PostId == postId);
+                if (post == null) return "Không tìm thấy bài viết";
 
-        //    try
-        //    {
-        //        var post = await _context.Posts.FirstOrDefaultAsync(x => x.PostId == postId);
-        //        if (post == null) return "Không tìm thấy bài viết";
+                if (post.Thumbnail != null)
+                {
+                    string folderKey = $"{UrlS3.Post}{post.PostId}/";
+                    await _s3Service.DeleteFolderAsync(folderKey);
+                }
 
-        //        var imagePaths = post.PostImages.Select(img => Path.Combine(Directory.GetCurrentDirectory(), Constant.UrlImagePath, img.ImageUrl)).ToList();
-        //        if (imagePaths.Any())
-        //        {
-        //            foreach (var imagePath in imagePaths)
-        //            {
-        //                if (File.Exists(imagePath))
-        //                {
-        //                    File.Delete(imagePath);
-        //                }
-        //            }
-        //        }
-        //        _context.Posts.Remove(post);
+                _context.Posts.Remove(post);
 
-        //        await _context.SaveChangesAsync();
-        //        await transaction.CommitAsync();
-        //        return "";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        await transaction.RollbackAsync();
-        //        return $"Đã xảy ra lỗi: {ex.InnerException}";
-        //    }
-        //}
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return "";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return $"Đã xảy ra lỗi: {ex.InnerException}";
+            }
+        }
     }
 }

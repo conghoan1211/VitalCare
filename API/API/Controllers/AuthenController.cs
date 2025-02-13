@@ -191,7 +191,7 @@ namespace API.Controllers
 
             return Ok(new
             {
-                isAuthenticated = true,  data
+                isAuthenticated = true,  data 
             });
         }
 
@@ -215,7 +215,7 @@ namespace API.Controllers
 
                 return Ok(new
                 {
-                    refreshToken = newRefreshToken
+                    refreshToken = newRefreshToken.Result
                 });
             }
             catch (Exception ex)

@@ -11,7 +11,7 @@ namespace API.Services
     public interface IOrderService
     {
         public Task<(string, OrderVM?)> CreateOrder(InsertOrderVM? input);
-        public Task<(string, List<OrderVM>?)> GetAll(int status);
+        public Task<(string, List<OrderVM>?)> GetAll();
         public Task<string> SetStatus(string orderId, int status);
         public Task<(string, List<OrderVM>?)> GetOrderByUserId(string userId);
 
@@ -117,10 +117,9 @@ namespace API.Services
             }
         }
 
-        public async Task<(string, List<OrderVM>?)> GetAll(int status)
+        public async Task<(string, List<OrderVM>?)> GetAll()
         {
             var orders = await _context.Orders
-                .Where(x => status == -1 || x.Status == status)
                 .OrderByDescending(x => x.CreatedAt)
                 .Select(order => new OrderVM
                 {
@@ -174,14 +173,13 @@ namespace API.Services
                     if (product != null)
                     {
                         product.Stock += orderDetail.Quantity;
-                        if (product.Sold > orderDetail.Quantity) product.Sold -= orderDetail.Quantity;
+                        if (product.Sold >= orderDetail.Quantity) product.Sold -= orderDetail.Quantity;
 
                         product.Status = product.Stock > 0 ? (int)ProductStatus.Available : (int)ProductStatus.OutOfStock;
                         _context.Products.Update(product);
                     }
                 }
             }
-
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
             return "";

@@ -62,6 +62,38 @@ namespace API.Controllers
             return Ok(obj);
         }
 
+        [HttpGet("convertUrlToImages")]
+        public async Task<IActionResult> ConvertMultipleImages(string imageUrls)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(imageUrls))
+                    return BadRequest("Danh sách URL ảnh không hợp lệ.");
+
+                var httpClient = new HttpClient();
+                var urlList = imageUrls.Split(';').Select(url => url.Trim()).Where(url => !string.IsNullOrEmpty(url)).ToList();
+                var fileList = new List<FileContentResult>();
+
+                foreach (var imageUrl in urlList)
+                {
+                    var response = await httpClient.GetAsync(imageUrl);
+                    if (!response.IsSuccessStatusCode) continue;
+
+                    var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+                    var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                    var fileName = Path.GetFileName(new Uri(imageUrl).LocalPath);
+
+                    fileList.Add(File(imageBytes, contentType, fileName));
+                }
+
+                return Ok(fileList);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Lỗi server: " + ex.Message);
+            }
+        }
+
 
         // Download file from S3
         [HttpGet("download")]

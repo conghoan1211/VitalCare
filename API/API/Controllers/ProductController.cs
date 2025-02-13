@@ -1,4 +1,5 @@
-﻿using API.Services;
+﻿using API.Models;
+using API.Services;
 using API.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -35,21 +36,6 @@ namespace API.Controllers
                 success = true,
                 message = "Lấy danh sách thành công!",
                 data = product
-            });
-        }
-
-        [HttpGet("ListHome")]
-        public async Task<IActionResult> GetProductList()
-        {
-            var (message, product) = await _iProductService.GetList();
-            if (message.Length > 0)
-            {
-                return BadRequest(new  {
-                    success = false, message,
-                });
-            }
-            return Ok(new   {
-                success = true, message = "Lấy danh sách thành công!", data = product
             });
         }
 
@@ -111,32 +97,75 @@ namespace API.Controllers
         #endregion
 
         #region Admin role
+
+        [HttpGet("ListAdmin")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetProductList()
+        {
+            var (message, product) = await _iProductService.GetListAdmin();
+            if (message.Length > 0)
+            {
+                return BadRequest(new {
+                    success = false, message,
+                });
+            }
+            return Ok( new {
+                success = true, message = "Lấy danh sách thành công!", data = product
+            });
+        }
+
         [HttpPost("InsertUpdate")]
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> DoInsertUpdateProduct(string userId, InsertUpdateProductVM? input)
         {
-            string msg = await _iProductService.DoInsertUpdate(input, userId);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok("Update Product Successfully!");
+            string message = await _iProductService.DoInsertUpdate(input, userId);
+            if (message.Length > 0)
+            {
+                return BadRequest(new{
+                    success = false, message,
+                });
+            }
+            return Ok(new  {
+                success = true,  message = "Cập nhật thành công!",
+            });
         }
 
         [HttpPost("ToggleActive")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> DoToggleActive(string userID, bool status)
+        public async Task<IActionResult> DoToggleActive([FromBody] ToggleActiveRequest request)
         {
-            string msg = await _iProductService.DoToggleActive(userID, status);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok("Update Product Successfully!");
+            string message = await _iProductService.DoToggleActive(request.ProductId, request.isActive);
+            if (message.Length > 0)
+            {
+                return BadRequest(new {
+                    success = false,   message,
+                });
+            }
+            return Ok(new  {
+                success = true, message = "Toggle Product Successfully!",
+            });
         }
 
         [HttpPut("DeleteSoft")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> DoToggleActive(string productId, string userId)
+        public async Task<IActionResult> DoDeleteSoft(string productId, string userId)
         {
-            string msg = await _iProductService.DoDeleteSoft(productId, userId);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok("Update Product Successfully!");
+            string message = await _iProductService.DoDeleteSoft(productId, userId);
+            if (message.Length > 0)
+            {
+                return BadRequest(new {
+                    success = false, message,
+                });
+            }
+            return Ok(new {
+                success = true, message = "Delete Product Successfully!",
+            });
         }
         #endregion
+    }
+    public class ToggleActiveRequest
+    {
+        public string ProductId { get; set; }
+        public bool isActive { get; set; }
     }
 }

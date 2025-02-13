@@ -10,7 +10,7 @@ namespace API.Services
 {
     public interface IProductService
     {
-        public Task<(string, List<ProductListVM>?)> GetList();
+        public Task<(string, List<ProductsVM>?)> GetListAdmin();
         public Task<(string, ProductDetailVM?)> GetDetail(string productId);
         public Task<string> DoInsertUpdate(InsertUpdateProductVM? input, string userId);
         public Task<string> DoToggleActive(string productId, bool active);
@@ -54,21 +54,21 @@ namespace API.Services
             var list = await _context.Products.Include(x => x.Category)
                 .Where(x => x.IsActive == true && x.IsDeleted == false)
                 .FirstOrDefaultAsync(x => x.ProductId == productId);
-            if (list == null) return ("No product available", null);
+            if (list == null) return ("Sản phẩm đã bị giới hạn truy cập.", null);
 
             var listMapper = _mapper.Map<ProductDetailVM>(list);
             return ("", listMapper);
         }
 
-        public async Task<(string, List<ProductListVM>?)> GetList()
+        public async Task<(string, List<ProductsVM>?)> GetListAdmin()
         {
             var list = await _context.Products.Include(x => x.Category)
-                .Where(x => x.IsActive == true && x.IsDeleted == false)
+                .Where(x => x.IsDeleted == false)
                 .ToListAsync();
 
-            if (!list.Any()) return ("No product available", null);
+            if (!list.Any()) return ("No products available", null);
 
-            var listMapper = _mapper.Map<List<ProductListVM>>(list);
+            var listMapper = _mapper.Map<List<ProductsVM>>(list);
             return ("", listMapper);
         }
 
@@ -109,6 +109,7 @@ namespace API.Services
                         CreatedAt = DateTime.Now,
                         CreateUser = userId,
                         Description = input.Description,
+                        ProductUrl = input.ProductUrl ?? uploadedUrls.First(),
                         ImageUrl = string.Join(";", uploadedUrls),
                         IsActive = input.IsActive,
                         IsDeleted = false,
@@ -139,6 +140,7 @@ namespace API.Services
                     oldProduct.Title = input.Title;
                     oldProduct.NewPrice = input.NewPrice;
                     oldProduct.CurrentPrice = input.CurrentPrice;
+                    oldProduct.ProductUrl = input.ProductUrl ?? uploadedUrls.First(); // Đặt ảnh đầu tiên làm ảnh chính
                     oldProduct.CategoryId = input.CategoryId;
                     oldProduct.Status = input.Status;
                     oldProduct.Rating = input.Rating;

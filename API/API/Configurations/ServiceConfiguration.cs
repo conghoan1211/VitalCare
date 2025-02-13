@@ -30,8 +30,7 @@ namespace API.Configurations
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IOrderService, OrderService>();
-
-
+            services.AddScoped<IPostService, PostService>();
 
 
 
