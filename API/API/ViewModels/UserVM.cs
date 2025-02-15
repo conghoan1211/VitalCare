@@ -51,6 +51,8 @@ namespace API.ViewModels
         public DateTime? UpdateAt { get; set; }
         public string? CreateUser { get; set; }
         public string? UpdateUser { get; set; }
+        public string? DistrictName { get; set; }
+        public string? ProvinceName { get; set; }
         public int? Status { get; set; }
         public DateTime? BlockUntil { get; set; }
     }
@@ -73,6 +75,9 @@ namespace API.ViewModels
         public string? UpdateUser { get; set; }
         public int? Status { get; set; }
         public DateTime? BlockUntil { get; set; }
+        public string? DistrictName { get; set; }
+        public string? ProvinceName { get; set; }
+        public DateTime? LastLogin { get; set; }
     }
 
 }

@@ -2,13 +2,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin")]
-    public class AccountController : ControllerBase
+    public class AccountController : BaseController
     {
         private readonly IAccountService _iService;
         public AccountController(IAccountService iService)
@@ -17,19 +18,26 @@ namespace API.Controllers
         }
 
         [HttpGet("GetList")]
-        public async Task<IActionResult> GetCategoryList()
+        public async Task<IActionResult> GetAccountList()
         {
-            var (msg, list) = await _iService.GetList();
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok(list);
+            var (message, list) = await _iService.GetList();
+            if (message.Length > 0)
+            {
+                return BadRequest(new { success = false, message });
+            }
+            return Ok(new { success = true, message = "Lấy danh sách tài khoản thành công.", data = list });
         }
 
         [HttpPost("ToggleActive")]
-        public async Task<IActionResult> DoToggleActive(string userId, string usertoken, bool active)
+        public async Task<IActionResult> DoToggleActive( bool active, string userId)
         {
-            string msg = await _iService.DoToggleActive(userId,usertoken,active);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok("Update Category Successfully!");
+            var userToken = GetUserId();
+            string message = await _iService.DoToggleActive(userToken, active, userId);
+            if (message.Length > 0)
+            {
+                return BadRequest(new { success = false, message });
+            }
+            return Ok(new { success = true, message = "Thao tác thành công." });
         }
 
         [HttpGet("DoSearch")]

@@ -16,6 +16,7 @@ namespace API.Services
         public Task<string> InsertUpdatePost(InsertUpdatePost? input, string userId);
         public Task<string> DoChangePrivacy(string postId, int privacy);
         public Task<string> DoDeletePost(string postId);
+        public Task<(string, List<PostListVM>?)> GetListPopular();
 
     }
 
@@ -36,11 +37,26 @@ namespace API.Services
         {
             var list = await _context.Posts.Include(x => x.Category)
                 .Where(x => x.Category.TypeObject == (int)TypeCateria.Post && (privacy == -1 || x.Privacy == privacy))
+                .OrderBy(x => Guid.NewGuid())
                 .ToListAsync();
             if (list == null || !list.Any()) return ("No post available!", null);
 
             var postMapper = _mapper.Map<List<PostListVM>>(list);
 
+            return ("", postMapper);
+        }
+
+        public async Task<(string, List<PostListVM>?)> GetListPopular()
+        {
+            var list = await _context.Posts.Include(x => x.Category)
+                .Where(x => x.Category.TypeObject == (int)TypeCateria.Post && x.Privacy == (int)PostPrivacy.Public)
+                .OrderByDescending(x => x.Views)
+                .ThenByDescending(x => x.Likes)
+                .Take(5)
+                .ToListAsync();
+            if (list == null || !list.Any()) return ("No post available!", null);
+
+            var postMapper = _mapper.Map<List<PostListVM>>(list);
             return ("", postMapper);
         }
 
@@ -84,7 +100,7 @@ namespace API.Services
                 thumbnailUrl = await _s3Service.UploadFileAsync(key, input.Thumbnail);
                 var newPost = new Post
                 {
-                    PostId = Guid.NewGuid().ToString(),
+                    PostId = input.PostId,
                     UserId = userId,
                     Title = input.Title,
                     IsComment = input.IsComment,

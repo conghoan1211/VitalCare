@@ -17,9 +17,9 @@ namespace API.Controllers
         }
 
         [HttpGet("List")]
-        public async Task<IActionResult> GetCategoryList(bool? isActive, int? typeCateria = null)
+        public async Task<IActionResult> GetCategoryList(bool? active, int? typeCateria = null)
         {
-            var (message, list) = await _iCategoryService.GetList(isActive, typeCateria);
+            var (message, list) = await _iCategoryService.GetList(active, typeCateria);
             if (message.Length > 0)
             {
                 return BadRequest(new
@@ -37,9 +37,9 @@ namespace API.Controllers
         }
 
         [HttpGet("GetDetail")]
-        public async Task<IActionResult> GetCategoryDetail(int categoryId, bool? isActive = null, int? typeCateria = null)
+        public async Task<IActionResult> GetCategoryDetail(int categoryId, bool? active = null, int? typeCateria = null)
         {
-            var (msg, list) = await _iCategoryService.GetDetail(categoryId, isActive, typeCateria);
+            var (msg, list) = await _iCategoryService.GetDetail(categoryId, active, typeCateria);
             if (msg.Length > 0) return BadRequest(msg);
             return Ok(list);
         }
@@ -48,27 +48,38 @@ namespace API.Controllers
         [HttpPost("InsertUpdate")]
         public async Task<IActionResult> DoInsertUpdateProduct(InsertUpdateCategory? input)
         {
-            string msg = await _iCategoryService.DoInsertUpdate(input);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok("Update Category Successfully!");
+            string message = await _iCategoryService.DoInsertUpdate(input);
+            if (message.Length > 0)
+            {
+                return BadRequest(new { success = false, message });
+            }
+            return Ok(new { success = true, message = "Thao tác thành công." });
         }
 
         [Authorize(Policy = "AdminOnly")]
         [HttpPost("ToggleActive")]
-        public async Task<IActionResult> DoToggleActive(int? categoryId, bool active)
+        public async Task<IActionResult> DoToggleActive([FromBody] ToggleCategoryRequest request)
         {
-            string msg = await _iCategoryService.DoToggleActive(categoryId, active);
-            if (msg.Length > 0) return BadRequest(msg);
-            return Ok("Update Category Successfully!");
+            string message = await _iCategoryService.DoToggleActive(request.CategoryId);
+            if (message.Length > 0)
+            {
+                return BadRequest(new { success = false, message });
+            }
+            return Ok(new { success = true, message = "Change Privacy Successfully." });
         }
 
         [Authorize(Policy = "AdminOnly")]
         [HttpPut("DeleteSoft")]
-        public async Task<IActionResult> DoToggleActive(int? categoryId )
+        public async Task<IActionResult> DoDelete(int? categoryId )
         {
             string msg = await _iCategoryService.DoDeleteSoft(categoryId );
             if (msg.Length > 0) return BadRequest(msg);
             return Ok("Update Category Successfully!");
         }
     }
+    public class ToggleCategoryRequest
+    {
+        public int? CategoryId { get; set; }
+    }
+
 }

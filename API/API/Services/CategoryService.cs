@@ -13,7 +13,7 @@ namespace API.Services
     {
         public Task<(string, List<CategoryVM>?)> GetList(bool? active = true, int? typeCateria = null);
         public Task<(string, CategoryVM?)> GetDetail(int categoryId, bool? active = null, int? typeCateria = null);
-        public Task<string> DoToggleActive(int? categoryId, bool active);
+        public Task<string> DoToggleActive(int? categoryId);
         public Task<string> DoInsertUpdate(InsertUpdateCategory? input);
         public Task<string> DoDeleteSoft(int? categoryId);
 
@@ -29,14 +29,14 @@ namespace API.Services
             _context = context;
             _mapper = mapper;
         }
-        public async Task<string> DoToggleActive(int? categoryId, bool active)
+        public async Task<string> DoToggleActive(int? categoryId)
         {
             if (categoryId == null) return "Category ID is not valid!";
 
-            var cate = await _context.Categories.FirstOrDefaultAsync(x => x.Id == categoryId && x.IsDeleted == true);
+            var cate = await _context.Categories.FirstOrDefaultAsync(x => x.Id == categoryId && x.IsDeleted == false);
             if (cate == null) return "Category is not available!";
 
-            cate.IsActive = active;
+            cate.IsActive = !cate.IsActive;
             _context.Categories.Update(cate);
             await _context.SaveChangesAsync();
             return "";
@@ -45,9 +45,21 @@ namespace API.Services
         public async Task<(string, List<CategoryVM>?)> GetList(bool? active = null, int? typeCateria = null)
         {
             var list = await _context.Categories
-                .Where(x => x.IsDeleted == false && (active == null || x.IsActive == active)
-                && (typeCateria == null || x.TypeObject == typeCateria))
-                .ToListAsync();
+                  .Where(x => x.IsDeleted == false
+                      && (active == null || x.IsActive == active)
+                      && (typeCateria == null || x.TypeObject == typeCateria))
+                  .OrderBy(x => x.TypeObject)
+                  .ThenBy(x => x.Id)
+                  .Select(x => new CategoryVM
+                  {
+                      Id = x.Id,
+                      Name = x.Name,
+                      TypeObject = x.TypeObject,
+                      IsDeleted = x.IsDeleted ?? false,
+                      IsActive = x.IsActive ?? false,
+                      Number = _context.Products.Count(p => p.CategoryId == x.Id && p.IsDeleted == false) + _context.Posts.Count(p => p.CategoryId == x.Id)
+                  })
+                  .ToListAsync();
             if (list.IsNullOrEmpty()) return ("No Category available", null);
 
             var listMapper = _mapper.Map<List<CategoryVM>>(list);

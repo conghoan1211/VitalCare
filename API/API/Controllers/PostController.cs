@@ -40,6 +40,17 @@ namespace API.Controllers
             return Ok(new { success = true, message = "Lấy danh sách bài viết thành công.", data = list });
         }
 
+        [HttpGet("GetListPopular")]
+        public async Task<IActionResult> GetListPopular()
+        {
+            var (message, list) = await _iService.GetListPopular();
+            if (message.Length > 0)
+            {
+                return BadRequest(new { success = false, message });
+            }
+            return Ok(new { success = true, message = "Lấy danh sách bài viết phổ biến thành công.", data = list });
+        }
+
         [HttpGet("GetDetail")]
         public async Task<IActionResult> GetDetail(string postId)
         {

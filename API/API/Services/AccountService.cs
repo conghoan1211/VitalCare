@@ -9,7 +9,7 @@ namespace API.Services
 {
     public interface IAccountService
     {
-        public Task<string> DoToggleActive(string userId, string usertoken, bool active);
+        public Task<string> DoToggleActive(string usertoken, bool active, string userId);
         public Task<(string, List<UserListVM>?)> GetList();
         public Task<(string, List<UserListVM>?)> DoSearch(string query);
         public Task<(string msg, User? user)> GetById(string userID);
@@ -37,7 +37,7 @@ namespace API.Services
             return (string.Empty, user);
         }
 
-        public async Task<string> DoToggleActive(string userId, string usertoken, bool active)
+        public async Task<string> DoToggleActive(string usertoken, bool active, string userId)
         {
             if (userId.IsEmpty()) return "User ID is not valid!";
 
@@ -53,7 +53,7 @@ namespace API.Services
             return "";
         }
 
-        public async Task<string> ChangeRole(string userId, string usertoken, int roleId)
+        public async Task<string> ChangeRole(string userId, int roleId)
         {
             if (userId.IsEmpty()) return "User ID is not valid!";
 
@@ -63,7 +63,7 @@ namespace API.Services
 
             user.RoleId = roleId;
             user.UpdateAt = DateTime.UtcNow;
-            user.UpdateUser = usertoken;
+            user.UpdateUser = userId;
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
@@ -81,7 +81,7 @@ namespace API.Services
         public async Task<(string, List<UserListVM>?)> DoSearch(string query)
         {
             var list = await _context.Users
-                .Where(x=> x.Username.RemoveMarkVNToLower().Contains(query.RemoveMarkVNToLower()))
+                .Where(x=> x.Username.ToLower().Contains(query.ToLower()))
                 .ToListAsync();
             if (list.IsNullOrEmpty()) return ("No User available", null);
 

@@ -198,7 +198,7 @@ namespace API.Services
         public async Task<(string, List<ProductListVM>?)> FilterByCategoryId(int categoryId, string? sortBy)
         {
             var list = await _context.Products.Include(x => x.Category)
-              .Where( x => x.IsActive == true && x.IsDeleted == false 
+              .Where( x => x.IsActive == true && x.IsDeleted == false && x.Category.IsActive == true
                   && (categoryId == 0 || x.CategoryId == categoryId)
               )
               .ToListAsync();

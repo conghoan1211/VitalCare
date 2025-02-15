@@ -62,8 +62,8 @@ namespace API.ViewModels
 
     public class InsertUpdatePost
     {
-        public string? PostId { get; set; }
-        [StringLength(3000, MinimumLength = 5, ErrorMessage = "Content length too long.")]
+        public string? PostId { get; set; } = null;
+        [StringLength(15000, MinimumLength = 5, ErrorMessage = "Content length too long.")]
         public string? Content { get; set; }
         [Required(ErrorMessage = "Tiêu đề không được để trống.")]
         [StringLength(200, MinimumLength = 10, ErrorMessage = "Tiêu đề có ít nhất 10 kí tự và tối đa 200 kí tự.")]
