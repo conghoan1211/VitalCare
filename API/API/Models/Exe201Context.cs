@@ -19,11 +19,17 @@ public partial class Exe201Context : DbContext
 
     public virtual DbSet<Comment> Comments { get; set; }
 
+    public virtual DbSet<Conversation> Conversations { get; set; }
+
     public virtual DbSet<Like> Likes { get; set; }
+
+    public virtual DbSet<Message> Messages { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
 
     public virtual DbSet<OrderDetail> OrderDetails { get; set; }
+
+    public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<Post> Posts { get; set; }
 
@@ -31,7 +37,13 @@ public partial class Exe201Context : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {}
+    public virtual DbSet<UserDailyUsage> UserDailyUsages { get; set; }
+
+    public virtual DbSet<UserSubscription> UserSubscriptions { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("server =localhost; database = exe201;uid=sa;pwd=hoancute;TrustServerCertificate=true");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +86,36 @@ public partial class Exe201Context : DbContext
                 .HasConstraintName("FK__Comments__UserID__398D8EEE");
         });
 
+        modelBuilder.Entity<Conversation>(entity =>
+        {
+            entity.HasKey(e => e.ConversationId).HasName("PK__Conversa__C050D897C1BD7DC7");
+
+            entity.HasIndex(e => e.UserId, "IDX_Conversations_UserID");
+
+            entity.Property(e => e.ConversationId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("ConversationID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.LastMessageAt).HasColumnType("datetime");
+            entity.Property(e => e.ModelUsed)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Title).HasMaxLength(255);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Conversations)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__Conversat__UserI__693CA210");
+        });
+
         modelBuilder.Entity<Like>(entity =>
         {
             entity.HasKey(e => e.LikeId).HasName("PK__Likes__A2922CF4AB5BA346");
@@ -102,6 +144,29 @@ public partial class Exe201Context : DbContext
                 .HasConstraintName("FK__Likes__UserID__3E52440B");
         });
 
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.HasKey(e => e.MessageId).HasName("PK__Messages__C87C037C27D25DDA");
+
+            entity.HasIndex(e => e.ConversationId, "IDX_Messages_ConversationID");
+
+            entity.Property(e => e.MessageId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("MessageID");
+            entity.Property(e => e.ConversationId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("ConversationID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Conversation).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.ConversationId)
+                .HasConstraintName("FK__Messages__Conver__6D0D32F4");
+        });
+
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.OrderId).HasName("PK__Order__C3905BAFC17B78E9");
@@ -112,31 +177,23 @@ public partial class Exe201Context : DbContext
                 .HasMaxLength(36)
                 .IsUnicode(false)
                 .HasColumnName("OrderID");
-            entity.Property(e => e.Address)
-                .HasMaxLength(255)
-                .IsUnicode(false);
+            entity.Property(e => e.Address).HasMaxLength(255);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .IsUnicode(false);
-            entity.Property(e => e.Note)
-                .HasMaxLength(255)
-                .IsUnicode(false);
+            entity.Property(e => e.Note).HasMaxLength(255);
             entity.Property(e => e.OrderDate).HasColumnType("datetime");
             entity.Property(e => e.Phone)
                 .HasMaxLength(255)
                 .IsUnicode(false);
-            entity.Property(e => e.SpecificAddress)
-                .HasMaxLength(255)
-                .IsUnicode(false);
+            entity.Property(e => e.SpecificAddress).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.UserId)
                 .HasMaxLength(36)
                 .IsUnicode(false)
                 .HasColumnName("UserID");
-            entity.Property(e => e.Username)
-                .HasMaxLength(255)
-                .IsUnicode(false);
+            entity.Property(e => e.Username).HasMaxLength(255);
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
@@ -178,6 +235,34 @@ public partial class Exe201Context : DbContext
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__OrderDeta__Produ__4E88ABD4");
+        });
+
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasKey(e => e.PaymentId).HasName("PK__Payments__9B556A5871AF9D32");
+
+            entity.HasIndex(e => e.UserId, "IDX_Payments_UserID");
+
+            entity.Property(e => e.PaymentId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("PaymentID");
+            entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PaymentDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Completed");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__Payments__UserID__7F2BE32F");
         });
 
         modelBuilder.Entity<Post>(entity =>
@@ -285,6 +370,66 @@ public partial class Exe201Context : DbContext
             entity.Property(e => e.UpdateAt).HasColumnType("datetime");
             entity.Property(e => e.UpdateUser).HasMaxLength(36);
             entity.Property(e => e.Username).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<UserDailyUsage>(entity =>
+        {
+            entity.HasKey(e => e.UsageId).HasName("PK__UserDail__29B197C0A3C77269");
+
+            entity.ToTable("UserDailyUsage");
+
+            entity.HasIndex(e => new { e.UserId, e.UsageDate }, "IDX_UserDailyUsage_UserID_Date");
+
+            entity.HasIndex(e => new { e.UserId, e.UsageDate }, "UQ_UserDate").IsUnique();
+
+            entity.Property(e => e.UsageId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("UsageID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.MaxQuestionsPerDay).HasDefaultValue(10);
+            entity.Property(e => e.QuestionCount).HasDefaultValue(0);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserDailyUsages)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__UserDaily__UserI__73BA3083");
+        });
+
+        modelBuilder.Entity<UserSubscription>(entity =>
+        {
+            entity.HasKey(e => e.SubscriptionId).HasName("PK__UserSubs__9A2B24BDCFC43BB2");
+
+            entity.HasIndex(e => e.UserId, "IDX_UserSubscriptions_UserID");
+
+            entity.Property(e => e.SubscriptionId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("SubscriptionID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
+            entity.Property(e => e.MaxQuestions).HasDefaultValue(100);
+            entity.Property(e => e.StartDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UsedQuestions).HasDefaultValue(0);
+            entity.Property(e => e.UserId)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserSubscriptions)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__UserSubsc__UserI__7A672E12");
         });
 
         OnModelCreatingPartial(modelBuilder);

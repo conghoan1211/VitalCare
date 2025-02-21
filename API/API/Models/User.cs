@@ -65,9 +65,17 @@ public partial class User
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
+    public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
+
     public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
+    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
+
+    public virtual ICollection<UserDailyUsage> UserDailyUsages { get; set; } = new List<UserDailyUsage>();
+
+    public virtual ICollection<UserSubscription> UserSubscriptions { get; set; } = new List<UserSubscription>();
 }

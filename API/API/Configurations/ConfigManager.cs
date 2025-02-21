@@ -33,7 +33,8 @@
         public string AWSRegion { get; set; }
         public string UrlS3Key { get; set; }
 
-
+        // AI settings
+        public string AiKey { get; set; }
         public static ConfigManager gI()
         {
             return _instance;
@@ -78,6 +79,9 @@
                 AWSBucketName = _configuration.GetSection("AWS").GetSection("BucketName").Value;
                 AWSRegion = _configuration.GetSection("AWS").GetSection("Region").Value;
                 UrlS3Key = _configuration.GetSection("AWS").GetSection("UrlKey").Value;
+
+                AiKey = _configuration.GetSection("OpenAI").GetSection("AiKey").Value;
+
             }
             catch (Exception e)
             {

@@ -1,4 +1,5 @@
 ﻿using API.Configurations;
+using API.Services;
 
 namespace API.Helper
 {
@@ -21,6 +22,7 @@ namespace API.Helper
         public static readonly string NOTIFY_NEW_FOLLOW = "started following you.";
         public static readonly string NOTIFY_ACCEPTED_FRIENDS = "accepted your friends request.";
 
+        public static readonly string CHATAI_DEFAULT_MODEL = "gpt-3.5-turbo";
     }
 
     public static class UrlS3
@@ -65,12 +67,17 @@ namespace API.Helper
         Suspended // Người dùng bị đình chỉ
     }
 
-
-
     public enum Role
     {
         User = 0,
         Admin,
+    }
+
+    public enum ChatbotRole
+    {
+        User = 0,
+        Assistant,
+        System,
     }
 
     public enum TypeCateria

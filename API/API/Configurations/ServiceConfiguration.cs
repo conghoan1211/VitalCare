@@ -31,6 +31,7 @@ namespace API.Configurations
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IPostService, PostService>();
+            services.AddScoped<IChatbotService, ChatbotService>();
 
 
 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 namespace API.Models;
 
@@ -35,6 +34,7 @@ public partial class Order
     public int Total { get; set; }
 
     public int ShipPrice { get; set; }
+
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
     public virtual User User { get; set; } = null!;

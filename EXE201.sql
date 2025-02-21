@@ -148,20 +148,79 @@ CREATE TABLE [OrderDetail] (
     FOREIGN KEY ([OrderID]) REFERENCES [Order]([OrderID]) ON DELETE CASCADE,
     FOREIGN KEY ([ProductID]) REFERENCES Product([ProductID])
 );
+
+-- Conversations table to store chat conversations
+CREATE TABLE Conversations (
+    ConversationID [varchar](36) primary key NOT NULL,
+    UserID [varchar](36) NOT NULL,
+    Title [nvarchar](255) NOT NULL,
+    IsActive [bit] DEFAULT 1,
+	[CreatedAt] [datetime] DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    LastMessageAt [datetime],
+    ModelUsed [varchar](50), -- e.g., 'gpt-4', 'claude-3', etc.
+    FOREIGN KEY (UserID) REFERENCES [User](UserID) ON DELETE CASCADE
+);
+
+-- Messages table to store individual messages in conversations
+CREATE TABLE [Messages] (
+    MessageID [varchar](36) primary key NOT NULL,
+    ConversationID [varchar](36) NOT NULL,
+    [Role] [int] NOT NULL, -- 'user', 'assistant', or 'system'
+    Content [nvarchar](MAX) NOT NULL,
+	[CreatedAt] [datetime] DEFAULT GETDATE(),
+    FOREIGN KEY (ConversationID) REFERENCES Conversations(ConversationID) ON DELETE CASCADE
+);
+
+-- Usage statistics table for tracking API usage
+CREATE TABLE UserDailyUsage (
+    UsageID [varchar](36) PRIMARY KEY NOT NULL,
+    UserID [varchar](36) NOT NULL,
+    UsageDate [date] NOT NULL,  -- Lưu ngày sử dụng
+    QuestionCount [int] DEFAULT 0,  -- Số câu hỏi user đã gửi trong ngày
+    MaxQuestionsPerDay [int] DEFAULT 10, -- Số câu hỏi tối đa trong ngày (có thể điều chỉnh)
+    CreatedAt [datetime] DEFAULT GETDATE(),
+    UpdatedAt [datetime] NULL,
+    CONSTRAINT UQ_UserDate UNIQUE (UserID, UsageDate), -- Đảm bảo mỗi user chỉ có một bản ghi mỗi ngày
+    FOREIGN KEY (UserID) REFERENCES [User](UserID) ON DELETE CASCADE
+);
+
+--Quản lý số lượng câu hỏi theo tháng.
+CREATE TABLE UserSubscriptions (
+    SubscriptionID [varchar](36) PRIMARY KEY NOT NULL,
+    UserID [varchar](36) NOT NULL,
+    StartDate [datetime] DEFAULT GETDATE(), -- Ngày bắt đầu gói
+    ExpiryDate [datetime] NOT NULL,  -- Ngày hết hạn gói (1 tháng sau)
+    MaxQuestions INT DEFAULT 100, -- Số câu hỏi tối đa trong tháng
+    UsedQuestions INT DEFAULT 0, -- Số câu hỏi đã dùng trong tháng
+    CreatedAt [datetime] DEFAULT GETDATE(),
+    UpdatedAt [datetime] NULL,
+    FOREIGN KEY (UserID) REFERENCES [User](UserID) ON DELETE CASCADE
+);
+
+CREATE TABLE Payments (
+    PaymentID [varchar](36) PRIMARY KEY NOT NULL,
+    UserID [varchar](36) NOT NULL,
+    Amount DECIMAL(10, 2) NOT NULL, -- Số tiền nạp vào
+    PaymentDate [datetime] DEFAULT GETDATE(),
+    [Status] [varchar](20) DEFAULT 'Completed', -- 'Completed', 'Pending', 'Failed'
+    FOREIGN KEY (UserID) REFERENCES [User](UserID) ON DELETE CASCADE
+);
+
+
+-- Chỉ mục tối ưu truy vấn
+CREATE INDEX IDX_Messages_ConversationID ON Messages(ConversationID);
+CREATE INDEX IDX_Conversations_UserID ON Conversations(UserID);
+CREATE INDEX IDX_UserDailyUsage_UserID_Date ON UserDailyUsage(UserID, UsageDate);
+CREATE INDEX IDX_UserSubscriptions_UserID ON UserSubscriptions(UserID);
+CREATE INDEX IDX_Payments_UserID ON Payments(UserID);
+
+
 CREATE INDEX IX_Users_Username_Email ON [User] (Username, Email);
 SELECT * 
 FROM sys.indexes
 WHERE object_id = OBJECT_ID('User');
 
-
-
-SELECT * 
-FROM Posts p
-JOIN Category c ON p.CategoryID = c.ID
-WHERE c.TypeObject = 2 AND p.Privacy = 0;
-DBCC CHECKIDENT ('Category', RESEED, 6);
-
-INSERT INTO Category (Name, TypeObject) VALUES (N'Y tế', 2);
 
 /*
 select * from likes
@@ -201,3 +260,11 @@ INSERT INTO  [Comments] ([CommentID], UserID, [EntityID], CreatedAt,[TypeObject]
 VALUES ('c1', '670547e5-621a-460b-8c30-5645f40704c0', 'post1', GETDATE(), 1);
 
 DELETE FROM Posts WHERE PostID = 'post1';
+
+SELECT * 
+FROM Posts p
+JOIN Category c ON p.CategoryID = c.ID
+WHERE c.TypeObject = 2 AND p.Privacy = 0;
+DBCC CHECKIDENT ('Category', RESEED, 6);
+
+INSERT INTO Category (Name, TypeObject) VALUES (N'Y tế', 2);

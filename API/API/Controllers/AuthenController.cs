@@ -10,13 +10,12 @@ using InstagramClone.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace API.Controllers
 {
     [Route("api/auth")]
     [ApiController]
-    public class AuthenController : Controller
+    public class AuthenController : ControllerBase
     {
         private readonly IAuthenticateService _iAuthenticate;
         private readonly IHttpContextAccessor _httpContextAccessor;
