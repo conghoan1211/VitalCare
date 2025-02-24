@@ -32,7 +32,7 @@ namespace API.Configurations
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IPostService, PostService>();
             services.AddScoped<IChatbotService, ChatbotService>();
-
+            services.AddHttpClient<IChatbotService, ChatbotService>();
 
 
         }

@@ -38,6 +38,11 @@ namespace API.Configurations
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Product.Category.Name))
                 .ForMember(dest => dest.ProductUrl, opt => opt.MapFrom(src => src.Product.ProductUrl))
                 .ForMember(dest => dest.TotalPrice, opt => opt.MapFrom(src => src.Total));
+
+
+            // Chatbot mapping
+            CreateMap<Conversation, ConversationVm>();
+            CreateMap<Message, MessageVm>();
         }
     }
 }

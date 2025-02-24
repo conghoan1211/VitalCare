@@ -3,9 +3,12 @@ using API.Configurations;
 using API.Helper;
 using API.Models;
 using API.ViewModels;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -13,10 +16,10 @@ namespace API.Services
 {
     public interface IChatbotService
     {
-        public Task<Conversation> CreateConversation(string userId, string title);
-        public Task<(string, List<Conversation>?)> GetUserConversations(string userId);
-        public Task<List<Message>> GetMessagesByConversation(string conversationId);
-        public Task<(string, Message?)> SendMessage(string userId, string conversationId, int role, string content);
+        public Task<ConversationVm> CreateConversation(string userId);
+        public Task<(string, List<ConversationVm>?)> GetUserConversations(string userId);
+        public Task<List<MessageVm>> GetMessagesByConversation(string conversationId);
+        public Task<(string, MessageVm?)> SendMessage(string userId, string conversationId, int role, string content);
         public Task<string> UpdateUserDailyUsage(string userId);
 
     }
@@ -24,59 +27,100 @@ namespace API.Services
     {
         private readonly Exe201Context _context;
         private readonly HttpClient _httpClient;
+        private readonly IMapper _mapper;
 
         #region
         private readonly string AIApiKey = ConfigManager.gI().AiKey;
-        private readonly string AIUri = "https://api.openai.com/v1/";
+        private readonly string AIUri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+
+        private readonly string InitialSystemPrompt = @"Bạn là trợ lý AI của VitalCare, một nền tảng chuyên cung cấp thông tin và dịch vụ về sức khỏe xương khớp. Nhiệm vụ của bạn là hướng dẫn người dùng sử dụng website, tư vấn về các vấn đề xương khớp, và giúp họ tiếp cận thông tin một cách nhanh chóng, cô đọng và dễ hiểu. Khi tư vấn về sức khỏe, hãy ưu tiên các giải pháp tự nhiên, bài tập hỗ trợ và khuyến khích người dùng tham khảo ý kiến bác sĩ khi cần thiết.";
+        private readonly string SecondarySystemPrompt = @"Khi trả lời về các phương pháp điều trị, bạn cần tuân theo các nguyên tắc sau:
+                                    - Luôn dựa trên bằng chứng khoa học và nghiên cứu y khoa cập nhật
+                                    - Ưu tiên đề cập đến các phương pháp điều trị đã được chứng minh hiệu quả
+                                    - Giải thích rõ ràng về cơ chế tác động và lợi ích của từng phương pháp
+                                    - Cảnh báo về các tác dụng phụ có thể xảy ra
+                                    - Nhấn mạnh tầm quan trọng của việc tuân thủ phác đồ điều trị";
+
+        private readonly string UseSystemPrompt = @"Hướng Dẫn Sử Dụng Website 💡 Cách đăng ký tài khoản & đăng nhập:
+                                            Khi người dùng hỏi về cách đăng ký tài khoản trên trang web VitalCare, hãy hướng dẫn họ từng bước:
+                                            Cách 1:
+                                            1️⃣ Nhấn vào nút 'Đăng ký' ở góc trên cùng bên phải.
+                                            2️⃣ Nhập họ và tên, email và tạo mật khẩu.
+                                            3️⃣ Xác nhận tài khoản qua email bằng mã OTP được gửi vào địa chỉ email.
+                                            4️⃣ Đăng nhập bằng tài khoản vừa tạo.""
+                                            Cách 2:
+                                            đăng kí trực tiếp vào nút đăng nhập bằng google
+
+                                            💡 Cách đặt hàng & thanh toán:
+                                            ""Khi người dùng hỏi về cách mua hàng, hãy hướng dẫn họ chi tiết:
+                                            1️⃣ Chọn sản phẩm muốn mua và nhấn 'Thêm vào giỏ hàng'.
+                                            2️⃣ Vào giỏ hàng, kiểm tra sản phẩm, số lượng.
+                                            3️⃣ Nhập địa chỉ nhận hàng, chọn phương thức thanh toán.
+                                            4️⃣ Nhấn 'Xác nhận đơn hàng' để hoàn tất.";
+
+        private readonly string ImportantSystemPrompt = @"Sau mỗi khi đưa ra các phương pháp điều trị hay các tư vấn, bạn hãy khuyến khích người dùng tham khảo các bài viết, các sản phẩm hoặc video luyện tập ở ngay trên web VitalCare của chúng ta;
+                                            Bạn chỉ được trả lời các câu hỏi liên quan đến VitalCare, chăm sóc sức khỏe. Nếu gặp câu hỏi ngoài phạm vi, hãy từ chối trả lời.
+
+                                            Khi người dùng hỏi ai đã sáng lập hay phát triển ra website VitalCare. Bạn cần phải trả lời là do 1 nhóm sinh viên trường đại học FPT phát triển.\n
+                                            trong đó bên Marketing, nghiên cứu thị trường là các bạn: Lê Nguyễn Tùng Dương, Lương Tuệ Quang, Nguyễn Trà My. Bên phát triển Web là : Phạm Công Hoan, Cao Trường Sơn, Chu Thiên Quân. ";
 
         #endregion
 
-        public ChatbotService(Exe201Context context)
+        public ChatbotService(IMapper mapper, Exe201Context context, HttpClient httpClient)
         {
             _context = context;
-            _httpClient = new HttpClient
+            _mapper = mapper;
+            _httpClient = httpClient;
+        }
+
+        private async Task<List<object>> GetFormattedChatHistory(string conversationId)
+        {
+            var chatHistory = new List<object>();
+
+            chatHistory.Add(new
             {
-                BaseAddress = new Uri(AIUri)
-            };
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AIApiKey);
-        }
-
-        public async Task<Conversation> CreateConversation(string userId, string title)
-        {
-            var conversation = new Conversation
+                role = "model",
+                parts = new[] { new { text = InitialSystemPrompt } }
+            });
+            chatHistory.Add(new
             {
-                ConversationId = Guid.NewGuid().ToString(),
-                UserId = userId,
-                Title = title,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true,
-                ModelUsed = ConstMessage.CHATAI_DEFAULT_MODEL
-            };
-
-            _context.Conversations.Add(conversation);
-            await _context.SaveChangesAsync();
-            return conversation;
-        }
-
-        public async Task<(string, List<Conversation>?)> GetUserConversations(string userId)
-        {
-            if (userId.IsEmpty()) return ("UserId is null!", null);
-
-            var list = await _context.Conversations.Where(x => x.UserId == userId)
-                    .OrderByDescending(x => x.LastMessageAt)
-                    .ToListAsync();
-
-            return ("", list);
-        }
-
-        public async Task<List<Message>> GetMessagesByConversation(string conversationId)
-        {
-            return await _context.Messages
+                role = "model",
+                parts = new[] { new { text = SecondarySystemPrompt } }
+            });
+            chatHistory.Add(new
+            {
+                role = "model",
+                parts = new[] { new { text = UseSystemPrompt } }
+            });
+            chatHistory.Add(new
+            {
+                role = "model",
+                parts = new[] { new { text = ImportantSystemPrompt } }
+            });
+            var messages = await _context.Messages
                 .Where(m => m.ConversationId == conversationId)
                 .OrderBy(m => m.CreatedAt)
+                .Select(m => new
+                {
+                    role = m.Role == 0 ? "user" : "model",
+                    content = m.Content
+                })
                 .ToListAsync();
+
+            // Add conversation history
+            foreach (var message in messages)
+            {
+                chatHistory.Add(new
+                {
+                    role = message.role,
+                    parts = new[] { new { text = message.content } }
+                });
+            }
+
+            return chatHistory;
         }
-        public async Task<(string, Message?)> SendMessage(string userId, string conversationId, int role, string content)
+
+        public async Task<(string, MessageVm?)> SendMessage(string userId, string conversationId, int role, string content)
         {
             if (!await CanUserAskQuestion(userId))
                 return ("Bạn đã đạt giới hạn câu hỏi trong ngày. Hãy nạp thêm hoặc đợi ngày mai.", null);
@@ -87,7 +131,7 @@ namespace API.Services
                 var conversation = await _context.Conversations
                     .FirstOrDefaultAsync(c => c.ConversationId == conversationId);
                 if (conversation == null)
-                    throw new Exception("Conversation not found");
+                    return ("Conversation not found", null);
 
                 var userMessage = new Message
                 {
@@ -100,35 +144,56 @@ namespace API.Services
 
                 _context.Messages.Add(userMessage);
                 conversation.LastMessageAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync(); 
+                if (conversation.Title.IsEmpty())
+                {
+                    conversation.Title = content.Length > 30 ? content.Substring(0, 30) : content;
+                }
+                _context.Conversations.Update(conversation);
+                await _context.SaveChangesAsync();
 
                 // Gửi toàn bộ lịch sử hội thoại lên AI
-                var chatHistory = await _context.Messages
-                    .Where(m => m.ConversationId == conversationId)
-                    .OrderBy(m => m.CreatedAt)
-                    .Select(m => new
-                    {
-                        role = m.Role == 0 ? "user" : "assistant",
-                        content = m.Content
-                    }).ToListAsync();
+                var chatHistory = await GetFormattedChatHistory(conversationId);
 
                 var requestBody = new
                 {
-                    model = ConstMessage.CHATAI_DEFAULT_MODEL,
-                    messages = chatHistory,
-                    max_tokens = 200
+                    contents = chatHistory,
+                    generationConfig = new
+                    {
+                        temperature = 1.0,
+                        topP = 0.95,
+                        topK = 64,
+                        maxOutputTokens = 500,
+                        responseMimeType = "text/plain"
+                    },
+                    safetySettings = new[] {
+                    new
+                        {
+                            category = "HARM_CATEGORY_HARASSMENT",
+                            threshold = "BLOCK_MEDIUM_AND_ABOVE"
+                        },
+                        new
+                        {
+                            category = "HARM_CATEGORY_HATE_SPEECH",
+                            threshold = "BLOCK_MEDIUM_AND_ABOVE"
+                        }
+                    }
                 };
 
-                var jsonContent = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
-                var response = await _httpClient.PostAsync("chat/completions", jsonContent);
+                var jsonPayload = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    Formatting = Formatting.Indented // Cho dễ đọc
+                });
+                var jsonContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync($"{AIUri}?key={AIApiKey}", jsonContent);
                 var responseString = await response.Content.ReadAsStringAsync();
 
                 // Kiểm tra response có hợp lệ không
                 dynamic responseData = JsonConvert.DeserializeObject(responseString);
-                if (responseData?.choices == null || responseData.choices.Count == 0)
+                if (responseData?.candidates == null || responseData.candidates.Count == 0)
                     return ("Lỗi khi gọi API AI: Không nhận được phản hồi hợp lệ.", null);
 
-                string aiResponse = responseData.choices[0].message.content;
+                string aiResponse = responseData.candidates[0].content.parts[0].text;
 
                 // Lưu tin nhắn AI vào DB
                 var aiMessage = new Message
@@ -146,17 +211,56 @@ namespace API.Services
 
                 // Cập nhật số lượng câu hỏi của user trong ngày
                 await UpdateUserDailyUsage(userId);
+                await transaction.CommitAsync();
 
-                await transaction.CommitAsync();  
-
-                return (string.Empty, aiMessage);
+                var mapper = _mapper.Map<MessageVm>(aiMessage);
+                return (string.Empty, mapper);
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();  
+                await transaction.RollbackAsync();
                 return ($"Lỗi khi gửi tin nhắn: {ex.Message}", null);
             }
         }
+
+        public async Task<ConversationVm> CreateConversation(string userId)
+        {
+            var conversation = new Conversation
+            {
+                ConversationId = Guid.NewGuid().ToString(),
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                ModelUsed = ConstMessage.CHATAI_DEFAULT_MODEL
+            };
+
+            _context.Conversations.Add(conversation);
+            await _context.SaveChangesAsync();
+
+            var mapper = _mapper.Map<ConversationVm>(conversation);
+            return mapper;
+        }
+        public async Task<(string, List<ConversationVm>?)> GetUserConversations(string userId)
+        {
+            if (userId.IsEmpty()) return ("UserId is null!", null);
+
+            var list = await _context.Conversations.Where(x => x.UserId == userId)
+                    .OrderByDescending(x => x.LastMessageAt)
+                    .ToListAsync();
+            var mapper = _mapper.Map<List<ConversationVm>>(list);
+            return ("", mapper);
+        }
+        public async Task<List<MessageVm>> GetMessagesByConversation(string conversationId)
+        {
+            var list = await _context.Messages
+                .Where(m => m.ConversationId == conversationId)
+                .OrderBy(m => m.CreatedAt)
+                .ToListAsync();
+            var mapper = _mapper.Map<List<MessageVm>>(list);
+            return mapper;
+
+        }
+
 
         public async Task<bool> CanUserAskQuestion(string userId)
         {
@@ -164,7 +268,7 @@ namespace API.Services
 
             var usage = await _context.UserDailyUsages
                 .FirstOrDefaultAsync(u => u.UserId == userId && u.UsageDate == today);
-            
+
             // Nếu chưa có bản ghi, cho phép hỏi
             if (usage == null) return true;
 

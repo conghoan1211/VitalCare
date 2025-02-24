@@ -191,8 +191,8 @@ CREATE TABLE UserSubscriptions (
     UserID [varchar](36) NOT NULL,
     StartDate [datetime] DEFAULT GETDATE(), -- Ngày bắt đầu gói
     ExpiryDate [datetime] NOT NULL,  -- Ngày hết hạn gói (1 tháng sau)
-    MaxQuestions INT DEFAULT 100, -- Số câu hỏi tối đa trong tháng
-    UsedQuestions INT DEFAULT 0, -- Số câu hỏi đã dùng trong tháng
+    MaxQuestions [int] DEFAULT 100, -- Số câu hỏi tối đa trong tháng
+    UsedQuestions [int] DEFAULT 0, -- Số câu hỏi đã dùng trong tháng
     CreatedAt [datetime] DEFAULT GETDATE(),
     UpdatedAt [datetime] NULL,
     FOREIGN KEY (UserID) REFERENCES [User](UserID) ON DELETE CASCADE
@@ -205,6 +205,33 @@ CREATE TABLE Payments (
     PaymentDate [datetime] DEFAULT GETDATE(),
     [Status] [varchar](20) DEFAULT 'Completed', -- 'Completed', 'Pending', 'Failed'
     FOREIGN KEY (UserID) REFERENCES [User](UserID) ON DELETE CASCADE
+);
+
+CREATE TABLE Videos (
+    VideoId [varchar](36) PRIMARY KEY NOT NULL,
+    Title [nvarchar](255) NOT NULL,
+    [Description] [nvarchar](MAX) NULL,
+    VideoUrl [nvarchar](500) NOT NULL,
+	Author [nvarchar](100) NOT NULL,
+    ThumbnailUrl [nvarchar](500) NULL, -- Ảnh thumbnail
+    Duration [int] NULL, -- Thời lượng video (giây)
+    CategoryId [varchar](36) NULL, -- Danh mục video
+	[Views] [int] NULL,
+	[Likes] [int] NULL,
+    CreatedAt [datetime] DEFAULT GETDATE(),
+    UpdatedAt [datetime]  ,
+);
+
+CREATE TABLE VideoComments (
+    CommentId [varchar](36) PRIMARY KEY NOT NULL,
+    VideoId [varchar](36) NOT NULL,
+    UserId [varchar](36) NOT NULL,
+    Content [nvarchar](500) NOT NULL,
+    ParentCommentId  [varchar](36) NULL, -- NULL nếu là bình luận gốc, có giá trị nếu là reply
+    CreatedAt [datetime] DEFAULT GETDATE(),
+    FOREIGN KEY (VideoId) REFERENCES Videos(VideoId),
+    FOREIGN KEY (UserId) REFERENCES [User](UserID),
+    FOREIGN KEY (ParentCommentId) REFERENCES VideoComments(CommentId) ON DELETE CASCADE
 );
 
 

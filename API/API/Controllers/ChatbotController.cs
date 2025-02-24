@@ -17,6 +17,20 @@ namespace API.Controllers
             _chatbotService = chatbotService;
         }
 
+        [HttpGet("create-conversation")]
+        public async Task<IActionResult> CreateConversation()
+        {
+            var userId = GetUserId();
+            if (userId.IsEmpty()) return BadRequest("User is not valid!");
+
+            var conversation = await _chatbotService.CreateConversation(userId);
+            if (conversation == null)
+            {
+                return BadRequest(new { success = false, message = "Tạo hội thoại thất bại." });
+            }
+            return Ok(new { success = true, message = "Tạo hội thoại thành công.", data = conversation });
+        }
+
         [HttpGet("get-conversations")]
         public async Task<IActionResult> GetConversations()
         {
@@ -46,12 +60,12 @@ namespace API.Controllers
         }
 
         [HttpPost("send-message")]
-        public async Task<IActionResult> SendMessage([FromBody] SendMessageRequest request)
+        public async Task<IActionResult> SendMessage([FromBody] SendMessageRequest requests)
         {
             var userId = GetUserId();
             if (userId.IsEmpty()) return BadRequest("User is not valid!");
 
-            var (message, newMessage)  = await _chatbotService.SendMessage(userId, request.ConversationId, request.Role, request.Content);
+            var (message, newMessage)  = await _chatbotService.SendMessage(userId, requests.ConversationId, requests.Role, requests.Content);
             if (message.Length > 0)
             {
                 return BadRequest(new { success = false, message });
@@ -65,6 +79,5 @@ namespace API.Controllers
         public string ConversationId { get; set; }
         public string Content { get; set; }
         public int Role{ get; set; }
-
     }
 }
