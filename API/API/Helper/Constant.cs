@@ -23,6 +23,7 @@ namespace API.Helper
         public static readonly string NOTIFY_ACCEPTED_FRIENDS = "accepted your friends request.";
 
         public static readonly string CHATAI_DEFAULT_MODEL = "gpt-3.5-turbo";
+        public static readonly string CONVERSATION_DEFAULT_TITLE = "Cuộc trò chuyện mới";
     }
 
     public static class UrlS3
@@ -83,7 +84,8 @@ namespace API.Helper
     public enum TypeCateria
     {
         Product = 1,
-        Post ,
+        Post,
+        Video,
     }
 
     public enum Gender

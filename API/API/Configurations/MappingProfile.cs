@@ -43,6 +43,11 @@ namespace API.Configurations
             // Chatbot mapping
             CreateMap<Conversation, ConversationVm>();
             CreateMap<Message, MessageVm>();
+
+            // Video mapping
+            CreateMap<Video, VideoListVM>();
+            CreateMap<Video, VideoDetailVM>();
+
         }
     }
 }

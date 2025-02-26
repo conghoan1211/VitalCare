@@ -98,6 +98,17 @@ namespace API.Controllers
             }
             return Ok(new { success = true, message = "Delete Post Successfully." });
         }
+
+        [HttpPut("update-views")]
+        public async Task<IActionResult> UpdateViews(string postId)
+        {
+            string message = await _iService.UpdateViews(postId);
+            if (message.Length > 0)
+            {
+                return BadRequest(new { success = false, message });
+            }
+            return Ok(new { success = true, message = "Update Views Successfully." });
+        }
     }
     public class ChangePrivacyRequest
     {

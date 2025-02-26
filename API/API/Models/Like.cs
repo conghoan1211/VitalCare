@@ -17,5 +17,7 @@ public partial class Like
 
     public virtual Post Entity { get; set; } = null!;
 
+    public virtual Video EntityNavigation { get; set; } = null!;
+
     public virtual User User { get; set; } = null!;
 }

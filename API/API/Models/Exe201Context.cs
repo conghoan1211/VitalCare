@@ -41,6 +41,10 @@ public partial class Exe201Context : DbContext
 
     public virtual DbSet<UserSubscription> UserSubscriptions { get; set; }
 
+    public virtual DbSet<Video> Videos { get; set; }
+
+    public virtual DbSet<VideoComment> VideoComments { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("server =localhost; database = exe201;uid=sa;pwd=hoancute;TrustServerCertificate=true");
@@ -137,6 +141,10 @@ public partial class Exe201Context : DbContext
             entity.HasOne(d => d.Entity).WithMany(p => p.LikesNavigation)
                 .HasForeignKey(d => d.EntityId)
                 .HasConstraintName("FK__Likes__EntityID__412EB0B6");
+
+            entity.HasOne(d => d.EntityNavigation).WithMany(p => p.LikesNavigation)
+                .HasForeignKey(d => d.EntityId)
+                .HasConstraintName("FK_Likes_Video");
 
             entity.HasOne(d => d.User).WithMany(p => p.Likes)
                 .HasForeignKey(d => d.UserId)
@@ -430,6 +438,66 @@ public partial class Exe201Context : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.UserSubscriptions)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK__UserSubsc__UserI__7A672E12");
+        });
+
+        modelBuilder.Entity<Video>(entity =>
+        {
+            entity.HasKey(e => e.VideoId).HasName("PK__Videos__BAE5126A5E7027F5");
+
+            entity.Property(e => e.VideoId)
+                .HasMaxLength(36)
+                .IsUnicode(false);
+            entity.Property(e => e.Author).HasMaxLength(100);
+            entity.Property(e => e.CreateUser).HasMaxLength(36);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Duration).HasMaxLength(100);
+            entity.Property(e => e.ThumbnailUrl).HasMaxLength(500);
+            entity.Property(e => e.Title).HasMaxLength(255);
+            entity.Property(e => e.UpdateUser).HasMaxLength(36);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.VideoUrl).HasMaxLength(500);
+
+            entity.HasOne(d => d.Category).WithMany(p => p.Videos)
+                .HasForeignKey(d => d.CategoryId)
+                .HasConstraintName("FK__Videos__Category__10566F31");
+        });
+
+        modelBuilder.Entity<VideoComment>(entity =>
+        {
+            entity.HasKey(e => e.CommentId).HasName("PK__VideoCom__C3B4DFCA0EA14E5B");
+
+            entity.Property(e => e.CommentId)
+                .HasMaxLength(36)
+                .IsUnicode(false);
+            entity.Property(e => e.Content).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ParentCommentId)
+                .HasMaxLength(36)
+                .IsUnicode(false);
+            entity.Property(e => e.UserId)
+                .HasMaxLength(36)
+                .IsUnicode(false);
+            entity.Property(e => e.VideoId)
+                .HasMaxLength(36)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.ParentComment).WithMany(p => p.InverseParentComment)
+                .HasForeignKey(d => d.ParentCommentId)
+                .HasConstraintName("FK__VideoComm__Paren__0E6E26BF");
+
+            entity.HasOne(d => d.User).WithMany(p => p.VideoComments)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__VideoComm__UserI__0D7A0286");
+
+            entity.HasOne(d => d.Video).WithMany(p => p.VideoComments)
+                .HasForeignKey(d => d.VideoId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__VideoComm__Video__0C85DE4D");
         });
 
         OnModelCreatingPartial(modelBuilder);

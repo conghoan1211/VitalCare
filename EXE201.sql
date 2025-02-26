@@ -108,8 +108,9 @@ CREATE TABLE  [Likes](
 	[EntityID] [varchar](36) NOT NULL,
 	[TypeObject] [int] NOT NULL,
 	[CreatedAt] [datetime] NULL,
-
-    FOREIGN KEY([EntityID]) REFERENCES [dbo].[Posts] ([PostID])  ON DELETE CASCADE,
+	
+	FOREIGN KEY (EntityID) REFERENCES Videos(VideoID) ON DELETE CASCADE,
+    FOREIGN KEY([EntityID]) REFERENCES [dbo].[Posts] ([PostID]) ON DELETE CASCADE,
     FOREIGN KEY([UserID] ) REFERENCES [dbo].[User] ([UserID])
 )
 
@@ -214,12 +215,16 @@ CREATE TABLE Videos (
     VideoUrl [nvarchar](500) NOT NULL,
 	Author [nvarchar](100) NOT NULL,
     ThumbnailUrl [nvarchar](500) NULL, -- Ảnh thumbnail
-    Duration [int] NULL, -- Thời lượng video (giây)
-    CategoryId [varchar](36) NULL, -- Danh mục video
+    Duration [nvarchar](100) NULL, -- Thời lượng video (giây)
+    CategoryId [int] NULL, -- Danh mục video
 	[Views] [int] NULL,
 	[Likes] [int] NULL,
+	[IsActive] [bit] NULL,
     CreatedAt [datetime] DEFAULT GETDATE(),
-    UpdatedAt [datetime]  ,
+    UpdatedAt [datetime],
+	[CreateUser] [nvarchar](36) NULL,
+	[UpdateUser] [nvarchar](36) NULL,
+	FOREIGN KEY ([CategoryID]) REFERENCES Category(ID)
 );
 
 CREATE TABLE VideoComments (
@@ -231,7 +236,7 @@ CREATE TABLE VideoComments (
     CreatedAt [datetime] DEFAULT GETDATE(),
     FOREIGN KEY (VideoId) REFERENCES Videos(VideoId),
     FOREIGN KEY (UserId) REFERENCES [User](UserID),
-    FOREIGN KEY (ParentCommentId) REFERENCES VideoComments(CommentId) ON DELETE CASCADE
+    FOREIGN KEY (ParentCommentId) REFERENCES VideoComments(CommentId) ON DELETE NO ACTION --- cần xóa các bl reply trước khi xóa bl gốc.
 );
 
 
@@ -241,35 +246,43 @@ CREATE INDEX IDX_Conversations_UserID ON Conversations(UserID);
 CREATE INDEX IDX_UserDailyUsage_UserID_Date ON UserDailyUsage(UserID, UsageDate);
 CREATE INDEX IDX_UserSubscriptions_UserID ON UserSubscriptions(UserID);
 CREATE INDEX IDX_Payments_UserID ON Payments(UserID);
-
-
 CREATE INDEX IX_Users_Username_Email ON [User] (Username, Email);
+
 SELECT * 
 FROM sys.indexes
 WHERE object_id = OBJECT_ID('User');
 
+SELECT 
+    i.name AS IndexName, 
+    t.name AS TableName, 
+    c.name AS ColumnName, 
+    i.type_desc AS IndexType
+FROM sys.indexes i
+JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+JOIN sys.tables t ON i.object_id = t.object_id
+JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
 
 /*
 select * from likes
 select * from [user]
 select * from category
 
-ALTER TABLE [OrderDetail]
-add  [CategoryName] [nvarchar](120) NOT NULL, ;
+ALTER TABLE [videos]
+add  [IsActive] [bit] NULL ;
 
 alter table [OrderDetail] 
 drop column	[CategoryID] [nvarchar](36) NULL,
 
-ALTER TABLE Product
-ALTER COLUMN [NewPrice] INT NULL;
+ALTER TABLE videos
+ALTER COLUMN [CategoryId] INT NULL;
 
 ALTER TABLE Product
 ALTER COLUMN [ImageUrl] NVARCHAR(max) not NULL;
 
-ALTER TABLE [Order]
-ALTER COLUMN [Username] NVARCHAR(255) NOT NULL;
+ALTER TABLE [Videos]
+ALTER COLUMN [Duration] NVARCHAR(100) NULL;
 
-ALTER TABLE posts
+ALTER TABLE videos
 add	FOREIGN KEY([CategoryID]) REFERENCES [Category] ([ID])
 
 SELECT 

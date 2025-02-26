@@ -21,7 +21,8 @@ namespace API.Controllers
         public async Task<IActionResult> CreateConversation()
         {
             var userId = GetUserId();
-            if (userId.IsEmpty()) return BadRequest("User is not valid!");
+            if (userId.IsEmpty())
+            return BadRequest(new { success = false, message = "User is not valid." });
 
             var conversation = await _chatbotService.CreateConversation(userId);
             if (conversation == null)
@@ -52,11 +53,29 @@ namespace API.Controllers
             if (userId.IsEmpty()) return BadRequest("User is not valid!");
 
             var messages = await _chatbotService.GetMessagesByConversation(conversationId);
-            if (messages == null || messages.Count <= 0)
-            {
-                return BadRequest(new { success = false, message = "Chưa có tin nhắn nào." });
-            }
             return Ok(new { success = true, message = "Lấy list tin nhắn thành công.", data = messages });
+        }
+
+        [HttpPut("update-title-conversation")]
+        public async Task<IActionResult> UpdateTitle([FromBody] RenameConversationRequest request)
+        {
+            var message = await _chatbotService.RenameConversation(request.ConversationId, request.Title);
+            if (message.Length > 0)
+            {
+                return BadRequest(new { success = false, message });
+            }
+            return Ok(new { success = true, message = "Cập nhật tiêu đề hội thoại thành công.", data = request.Title });
+        }
+
+        [HttpPost("delete-conversation")]
+        public async Task<IActionResult> DeleteConversation([FromBody] string conversationId)
+        {
+            var message = await _chatbotService.DeleteConversation(conversationId);
+            if (message.Length > 0)
+            {
+                return BadRequest(new { success = false, message });
+            }
+            return Ok(new { success = true, message = "Xóa hội thoại thành công." });
         }
 
         [HttpPost("send-message")]
@@ -79,5 +98,11 @@ namespace API.Controllers
         public string ConversationId { get; set; }
         public string Content { get; set; }
         public int Role{ get; set; }
+    }
+    // Định nghĩa class để nhận request
+    public class RenameConversationRequest
+    {
+        public string ConversationId { get; set; }
+        public string Title { get; set; }
     }
 }

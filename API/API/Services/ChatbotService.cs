@@ -5,11 +5,7 @@ using API.Models;
 using API.ViewModels;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Net.Http.Headers;
 using System.Text;
 
 namespace API.Services
@@ -21,6 +17,8 @@ namespace API.Services
         public Task<List<MessageVm>> GetMessagesByConversation(string conversationId);
         public Task<(string, MessageVm?)> SendMessage(string userId, string conversationId, int role, string content);
         public Task<string> UpdateUserDailyUsage(string userId);
+        public Task<string> DeleteConversation(string conversationId);
+        public Task<string> RenameConversation(string conversationId, string title);
 
     }
     public class ChatbotService : IChatbotService
@@ -31,7 +29,7 @@ namespace API.Services
 
         #region
         private readonly string AIApiKey = ConfigManager.gI().AiKey;
-        private readonly string AIUri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+        private readonly string AIUri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent";
 
         private readonly string InitialSystemPrompt = @"Bạn là trợ lý AI của VitalCare, một nền tảng chuyên cung cấp thông tin và dịch vụ về sức khỏe xương khớp. Nhiệm vụ của bạn là hướng dẫn người dùng sử dụng website, tư vấn về các vấn đề xương khớp, và giúp họ tiếp cận thông tin một cách nhanh chóng, cô đọng và dễ hiểu. Khi tư vấn về sức khỏe, hãy ưu tiên các giải pháp tự nhiên, bài tập hỗ trợ và khuyến khích người dùng tham khảo ý kiến bác sĩ khi cần thiết.";
         private readonly string SecondarySystemPrompt = @"Khi trả lời về các phương pháp điều trị, bạn cần tuân theo các nguyên tắc sau:
@@ -39,7 +37,11 @@ namespace API.Services
                                     - Ưu tiên đề cập đến các phương pháp điều trị đã được chứng minh hiệu quả
                                     - Giải thích rõ ràng về cơ chế tác động và lợi ích của từng phương pháp
                                     - Cảnh báo về các tác dụng phụ có thể xảy ra
-                                    - Nhấn mạnh tầm quan trọng của việc tuân thủ phác đồ điều trị";
+                                    - Nhấn mạnh tầm quan trọng của việc tuân thủ phác đồ điều trị
+                                \n Bạn là trợ lý AI của VitalCare, trang web vitalcare có cung cấp các sản phẩm để giúp người dùng cải thiện bệnh cơ xương khớp, và sản phẩm chủ yếu sẽ là sữa dinh dưỡng, miếng dán giảm đau và các thực phẩm dinh dưỡng khác
+                              Ngoài ra trang web còn có các bài viết, video luyện tập bổ ích cho việc cải thiện sức khỏe cơ xương khớp. \n
+                              khi người dùng hỏi 1 sản phẩm cụ thể nào đó thì hãy bảo họ vao trực tiếp trang danh sách sản phẩm hoặc ô tìm kiếm sản phẩm để xem.,
+                              thậm chỉ là sản phẩm đó nếu ko có, thì bảo họ tham khảo các sản phẩm khác.\n";
 
         private readonly string UseSystemPrompt = @"Hướng Dẫn Sử Dụng Website 💡 Cách đăng ký tài khoản & đăng nhập:
                                             Khi người dùng hỏi về cách đăng ký tài khoản trên trang web VitalCare, hãy hướng dẫn họ từng bước:
@@ -52,16 +54,23 @@ namespace API.Services
                                             đăng kí trực tiếp vào nút đăng nhập bằng google
 
                                             💡 Cách đặt hàng & thanh toán:
-                                            ""Khi người dùng hỏi về cách mua hàng, hãy hướng dẫn họ chi tiết:
+                                            Khi người dùng hỏi về cách mua hàng, hãy hướng dẫn họ chi tiết:
                                             1️⃣ Chọn sản phẩm muốn mua và nhấn 'Thêm vào giỏ hàng'.
                                             2️⃣ Vào giỏ hàng, kiểm tra sản phẩm, số lượng.
                                             3️⃣ Nhập địa chỉ nhận hàng, chọn phương thức thanh toán.
-                                            4️⃣ Nhấn 'Xác nhận đơn hàng' để hoàn tất.";
+                                            4️⃣ Nhấn 'Xác nhận đơn hàng' để hoàn tất.
+
+                                        \n cách cập nhật thông tin cá nhân hay đổi mật khẩu, theo dõi đơn hàng, hãy bảo họ vào trang profile, ấn vào hình avatar ở góc trên bên phải để vào và thực hiện";
+
+
 
         private readonly string ImportantSystemPrompt = @"Sau mỗi khi đưa ra các phương pháp điều trị hay các tư vấn, bạn hãy khuyến khích người dùng tham khảo các bài viết, các sản phẩm hoặc video luyện tập ở ngay trên web VitalCare của chúng ta;
-                                            Bạn chỉ được trả lời các câu hỏi liên quan đến VitalCare, chăm sóc sức khỏe. Nếu gặp câu hỏi ngoài phạm vi, hãy từ chối trả lời.
-
-                                            Khi người dùng hỏi ai đã sáng lập hay phát triển ra website VitalCare. Bạn cần phải trả lời là do 1 nhóm sinh viên trường đại học FPT phát triển.\n
+                                           bạn có thể trả lời câu hỏi nằm ngoài phạm vi chăm sóc sức khỏe hay vitalcare nhưng không được đi quá xa, nên nói cho người dùng biết nếu cuộc trò chuyện đang đi quá xa. \n
+                                           - Ưu tiên: Các vấn đề liên quan đến VitalCare và chăm sóc sức khỏe xương khớp.
+                                           - Mở rộng: Có thể trả lời các câu hỏi nằm ngoài phạm vi trên, nhưng chỉ ở mức độ vừa phải, không đi quá sâu vào chi tiết.
+                                           - Cảnh báo: Nếu cuộc trò chuyện bắt đầu đi quá xa khỏi chủ đề sức khỏe và VitalCare, tôi sẽ nhắc nhở người dùng và hướng họ trở lại các chủ đề phù hợp.
+                                 
+                                            \nKhi người dùng hỏi ai đã sáng lập hay phát triển ra website VitalCare. Bạn cần phải trả lời là do 1 nhóm sinh viên trường đại học FPT phát triển.\n
                                             trong đó bên Marketing, nghiên cứu thị trường là các bạn: Lê Nguyễn Tùng Dương, Lương Tuệ Quang, Nguyễn Trà My. Bên phát triển Web là : Phạm Công Hoan, Cao Trường Sơn, Chu Thiên Quân. ";
 
         #endregion
@@ -77,26 +86,7 @@ namespace API.Services
         {
             var chatHistory = new List<object>();
 
-            chatHistory.Add(new
-            {
-                role = "model",
-                parts = new[] { new { text = InitialSystemPrompt } }
-            });
-            chatHistory.Add(new
-            {
-                role = "model",
-                parts = new[] { new { text = SecondarySystemPrompt } }
-            });
-            chatHistory.Add(new
-            {
-                role = "model",
-                parts = new[] { new { text = UseSystemPrompt } }
-            });
-            chatHistory.Add(new
-            {
-                role = "model",
-                parts = new[] { new { text = ImportantSystemPrompt } }
-            });
+            // Lấy danh sách tin nhắn của cuộc hội thoại
             var messages = await _context.Messages
                 .Where(m => m.ConversationId == conversationId)
                 .OrderBy(m => m.CreatedAt)
@@ -107,14 +97,39 @@ namespace API.Services
                 })
                 .ToListAsync();
 
-            // Add conversation history
-            foreach (var message in messages)
+            // Kiểm tra xem hội thoại này đã có tin nhắn nào từ AI (model) chưa
+            bool hasAIResponse = messages.Any(m => m.role == "model");
+
+            // Nếu chưa có tin nhắn từ AI (tức là lần đầu mở), thêm 4 prompt hệ thống
+            if (!hasAIResponse)
             {
-                chatHistory.Add(new
+                chatHistory.Add(new { role = "model", parts = new[] { new { text = InitialSystemPrompt } } });
+                chatHistory.Add(new { role = "model", parts = new[] { new { text = SecondarySystemPrompt } } });
+                chatHistory.Add(new { role = "model", parts = new[] { new { text = UseSystemPrompt } } });
+                chatHistory.Add(new { role = "model", parts = new[] { new { text = ImportantSystemPrompt } } });
+            }
+
+            // Nếu có hơn 10 tin nhắn, chỉ lấy tin nhắn gần nhất của user
+            if (messages.Count > 10)
+            {
+                var lastUserMessage = messages.LastOrDefault(m => m.role == "user");
+                if (lastUserMessage != null)
                 {
-                    role = message.role,
-                    parts = new[] { new { text = message.content } }
-                });
+                    chatHistory.Add(new
+                    {
+                        role = "user",
+                        parts = new[] { new { text = lastUserMessage.content } }
+                    });
+                }
+            }
+            else
+            {
+                // Nếu ít hơn 10 tin nhắn, lấy tất cả
+                chatHistory.AddRange(messages.Select(m => new
+                {
+                    role = m.role,
+                    parts = new[] { new { text = m.content } }
+                }));
             }
 
             return chatHistory;
@@ -144,7 +159,7 @@ namespace API.Services
 
                 _context.Messages.Add(userMessage);
                 conversation.LastMessageAt = DateTime.UtcNow;
-                if (conversation.Title.IsEmpty())
+                if (conversation.Title.IsEmpty() || conversation.Title.Contains(ConstMessage.CONVERSATION_DEFAULT_TITLE))
                 {
                     conversation.Title = content.Length > 30 ? content.Substring(0, 30) : content;
                 }
@@ -160,22 +175,14 @@ namespace API.Services
                     generationConfig = new
                     {
                         temperature = 1.0,
-                        topP = 0.95,
-                        topK = 64,
-                        maxOutputTokens = 500,
+                        topP = 0.9,
+                        topK = 54,
+                        maxOutputTokens = 600,
                         responseMimeType = "text/plain"
                     },
                     safetySettings = new[] {
-                    new
-                        {
-                            category = "HARM_CATEGORY_HARASSMENT",
-                            threshold = "BLOCK_MEDIUM_AND_ABOVE"
-                        },
-                        new
-                        {
-                            category = "HARM_CATEGORY_HATE_SPEECH",
-                            threshold = "BLOCK_MEDIUM_AND_ABOVE"
-                        }
+                        new { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_MEDIUM_AND_ABOVE" },
+                        new { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_MEDIUM_AND_ABOVE" }
                     }
                 };
 
@@ -231,7 +238,8 @@ namespace API.Services
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true,
-                ModelUsed = ConstMessage.CHATAI_DEFAULT_MODEL
+                ModelUsed = ConstMessage.CHATAI_DEFAULT_MODEL,
+                Title = ConstMessage.CONVERSATION_DEFAULT_TITLE
             };
 
             _context.Conversations.Add(conversation);
@@ -260,7 +268,6 @@ namespace API.Services
             return mapper;
 
         }
-
 
         public async Task<bool> CanUserAskQuestion(string userId)
         {
@@ -306,5 +313,28 @@ namespace API.Services
             await _context.SaveChangesAsync();
             return "";
         }
+
+        public async Task<string> DeleteConversation(string conversationId)
+        {
+            var conversation = await _context.Conversations.FirstOrDefaultAsync(x => x.ConversationId == conversationId);
+            if (conversation == null) return "Conversation not found!";
+            _context.Conversations.Remove(conversation);
+            await _context.SaveChangesAsync();
+            return "";
+        }
+
+        public async Task<string> RenameConversation(string conversationId, string title)
+        {
+            var conversation = await _context.Conversations.FirstOrDefaultAsync(x => x.ConversationId == conversationId);
+            if (conversation == null) return "Conversation not found!";
+
+            conversation.Title = title;
+            conversation.UpdatedAt = DateTime.Now;
+            _context.Conversations.Update(conversation);
+            await _context.SaveChangesAsync();
+            return "";
+        }
+
+
     }
 }

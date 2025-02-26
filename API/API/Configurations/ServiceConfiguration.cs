@@ -33,6 +33,8 @@ namespace API.Configurations
             services.AddScoped<IPostService, PostService>();
             services.AddScoped<IChatbotService, ChatbotService>();
             services.AddHttpClient<IChatbotService, ChatbotService>();
+            services.AddHttpClient<IVideoService, VideoService>();
+
 
 
         }

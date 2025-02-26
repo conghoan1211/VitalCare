@@ -17,7 +17,7 @@ namespace API.Services
         public Task<string> DoChangePrivacy(string postId, int privacy);
         public Task<string> DoDeletePost(string postId);
         public Task<(string, List<PostListVM>?)> GetListPopular();
-
+        public Task<string> UpdateViews(string postId);
     }
 
     public class PostService : IPostService
@@ -205,5 +205,16 @@ namespace API.Services
                 return $"Đã xảy ra lỗi: {ex.InnerException}";
             }
         }
+
+        public async Task<string> UpdateViews(string postId)
+        {
+            var post = await _context.Posts.FirstOrDefaultAsync(x => x.PostId == postId);
+            if (post == null) return "Post not found!";
+            post.Views++;
+            _context.Posts.Update(post);
+            await _context.SaveChangesAsync();
+            return "";
+        }
+
     }
 }

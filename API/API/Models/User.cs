@@ -78,4 +78,6 @@ public partial class User
     public virtual ICollection<UserDailyUsage> UserDailyUsages { get; set; } = new List<UserDailyUsage>();
 
     public virtual ICollection<UserSubscription> UserSubscriptions { get; set; } = new List<UserSubscription>();
+
+    public virtual ICollection<VideoComment> VideoComments { get; set; } = new List<VideoComment>();
 }

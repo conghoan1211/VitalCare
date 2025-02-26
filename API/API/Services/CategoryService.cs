@@ -57,7 +57,9 @@ namespace API.Services
                       TypeObject = x.TypeObject,
                       IsDeleted = x.IsDeleted ?? false,
                       IsActive = x.IsActive ?? false,
-                      Number = _context.Products.Count(p => p.CategoryId == x.Id && p.IsDeleted == false) + _context.Posts.Count(p => p.CategoryId == x.Id)
+                      Number = _context.Products.Count(p => p.CategoryId == x.Id && p.IsDeleted == false) 
+                      + _context.Posts.Count(p => p.CategoryId == x.Id)
+                      + _context.Videos.Count(p => p.CategoryId == x.Id)
                   })
                   .ToListAsync();
             if (list.IsNullOrEmpty()) return ("No Category available", null);

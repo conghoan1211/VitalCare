@@ -18,4 +18,6 @@ public partial class Category
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+
+    public virtual ICollection<Video> Videos { get; set; } = new List<Video>();
 }
