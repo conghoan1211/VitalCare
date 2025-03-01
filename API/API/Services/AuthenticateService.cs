@@ -88,7 +88,7 @@ namespace API.Services
         public async Task<(string, LoginResult?)> DoLogin(UserLogin userLogin, HttpContext httpContext)
         {
             string msg = "";
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == userLogin.Username || x.Email == userLogin.Username);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == userLogin.Username);
             if (user is null) return ("Tài khoản không tồn tại.", null);
 
             msg = Converter.StringToMD5(userLogin.Password, out string mkMd5);
@@ -220,6 +220,7 @@ namespace API.Services
 
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
+
             return "";
         }
 

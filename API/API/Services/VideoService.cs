@@ -4,6 +4,7 @@ using API.Models;
 using API.ViewModels;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -19,6 +20,7 @@ namespace API.Services
         public Task<(string, int?)> UpdateLikes(string videoId);
         public Task<(string, int?)> UpdateDisLikes(string videoId);
         public Task<string> ChangeActive(string videoId, string userId);
+        public Task<(string, List<CategoryVideoVM>?)> GetCategory();
     }
     public class VideoService : IVideoService
     {
@@ -42,7 +44,7 @@ namespace API.Services
             list = order switch
             {
                 "created_dec" => list.OrderByDescending(x => x.CreatedAt).ToList(),
-                "view_dec" => list.OrderByDescending(x => x.Views).ToList(),
+                "view_dec" => list.OrderByDescending(x => x.Views).Take(5).ToList(),
                 _ => list
             };
             var videoMapper = _mapper.Map<List<VideoListVM>>(list);
@@ -58,6 +60,15 @@ namespace API.Services
             if (video == null) return ("Video not found!", null);
             var videoMapper = _mapper.Map<VideoDetailVM>(video);
             return ("", videoMapper);
+        }
+        public async Task<(string, List<CategoryVideoVM>?)> GetCategory()
+        {
+            var cates = await _context.Categories.Where(x => x.IsDeleted == false && x.IsActive == true
+                      && x.TypeObject == (int)TypeCateria.Video).ToListAsync();
+            if(cates == null || !cates.Any()) return ("No category available!", null);
+            
+            var cateMapper = _mapper.Map<List<CategoryVideoVM>>(cates);
+            return ("", cateMapper);
         }
 
         public async Task<string> InsertUpdateVideo(InsertUpdateVideoVM input, string userId)
@@ -75,7 +86,6 @@ namespace API.Services
                     IsActive = input.IsActive,
                     Title = input.Title,
                     VideoUrl = input.VideoUrl,
-                    ThumbnailUrl = input.ThumbnailUrl,
                     Description = input.Description,
                     CreateUser = userId,
                     Likes = 0,
@@ -94,7 +104,6 @@ namespace API.Services
                 oldVideo.IsActive = input.IsActive;
                 oldVideo.Title = input.Title;
                 oldVideo.VideoUrl = input.VideoUrl;
-                oldVideo.ThumbnailUrl = input.ThumbnailUrl;
                 oldVideo.Description = input.Description;
                 oldVideo.UpdatedAt = DateTime.Now;
                 oldVideo.UpdateUser = userId;

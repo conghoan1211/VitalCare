@@ -10,7 +10,11 @@ namespace API.ViewModels
         public string Author { get; set; } = null!;
         public string? Duration { get; set; }
         public string? Views { get; set; }
+        public string? Likes { get; set; }
+        public string? CategoryName { get; set; }
         public DateTime? CreatedAt { get; set; }
+        public bool IsActive { get; set; }
+        public string? Description { get; set; }
     }
 
     public class VideoDetailVM
@@ -34,17 +38,23 @@ namespace API.ViewModels
         [Required(ErrorMessage = "Tiêu đề không được để trống.")]
         [StringLength(200, MinimumLength = 10, ErrorMessage = "Tiêu đề có ít nhất 10 kí tự và tối đa 200 kí tự.")]
         public string? Title { get; set; }
-        [MaxLength(1000, ErrorMessage = "Mô tả không quá 1000 kí tự!")]
+        [MaxLength(5000, ErrorMessage = "Mô tả không quá 5000 kí tự!")]
         public string? Description { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập đường dẫn video.")]
         public string? VideoUrl { get; set; } 
         [Required(ErrorMessage = "Vui lòng ghi tên tác giả.")]
         public string? Author { get; set; } 
-        public string? ThumbnailUrl { get; set; }
         [Required(ErrorMessage = "Thời lượng video không được để trống.")]
         public string? Duration { get; set; }
-        public int? CategoryId { get; set; }  // update type object string to int in db
+        [Required(ErrorMessage = "Vui lòng chọn danh mục.")]
+        public int? CategoryId { get; set; }  
         public DateTime? CreatedAt { get; set; }
         public bool IsActive { get; set; } = true;
+    }
+
+    public class CategoryVideoVM
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }  
     }
 }

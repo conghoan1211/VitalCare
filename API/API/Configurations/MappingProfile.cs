@@ -48,6 +48,9 @@ namespace API.Configurations
             CreateMap<Video, VideoListVM>();
             CreateMap<Video, VideoDetailVM>();
 
+            // CategoryVideo mapping
+            CreateMap<Category, CategoryVideoVM>();
+
         }
     }
 }

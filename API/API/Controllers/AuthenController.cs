@@ -1,5 +1,6 @@
 ﻿using API.Common;
 using API.Configurations;
+using API.Helper;
 using API.Models;
 using API.Services;
 using API.Utilities;
@@ -7,9 +8,11 @@ using API.ViewModels;
 using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2.Requests;
 using InstagramClone.Utilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Net.Http;
 
 namespace API.Controllers
 {
@@ -103,19 +106,27 @@ namespace API.Controllers
             var (msg, data) = await _iAuthenticate.DoLogin(input, HttpContext);
             if (msg.Length > 0)
             {
-                return BadRequest(new
+                if (msg.Equals(ConstMessage.ACCOUNT_UNVERIFIED))
                 {
-                    success = false,
-                    message = msg,
-                    errorCode = "LOGIN_FAILED"
+                    _httpContextAccessor.HttpContext.Session.SetString("email_verify", input.Username); // Lưu email to verify
+                    msg = await EmailHandler.SendOtpAndSaveSession(input.Username, HttpContext);
+                    if (msg.Length > 0)
+                    {
+                        return BadRequest(new   {
+                            success = false,  message = msg,
+                        });
+                    }
+                    return Ok(new {
+                        success = true,  message = "Mã OTP đã được gửi vào email của bạn!",
+                        errorCode = "ACCOUNT_UNVERIFIED"
+                    });
+                }
+                return BadRequest(new  {
+                    success = false,  message = msg,  errorCode = "LOGIN_FAILED"
                 });
             }
-
-            return Ok(new
-            {
-                success = true,
-                message = "Đăng nhập thành công!",
-                data
+            return Ok(new  {
+                success = true, message = "Đăng nhập thành công!", data
             });
         }
 
@@ -153,14 +164,20 @@ namespace API.Controllers
                     success = false,  message = msg,
                 });
             }
-
+            msg = await EmailHandler.SendOtpAndSaveSession(input.Email, HttpContext);
+            if (msg.Length > 0)
+            {
+                return BadRequest(new {
+                    success = false,  message = msg,
+                });
+            }
             return Ok( new {
-                success = true, message = "Đăng ký thành công!",
+                success = true, message = "Mã OTP đã được gửi vào email của bạn!",
             });
         }
 
         [HttpGet("validate-token")]
-        public IActionResult ValidateToken(string refreshToken)
+        public IActionResult ValidateToken([FromQuery] string refreshToken)
         {
             var token = Request.Cookies["JwtToken"];
             if (string.IsNullOrEmpty(token))
@@ -193,17 +210,15 @@ namespace API.Controllers
                 isAuthenticated = true,  data 
             });
         }
-
-
         [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken(string refreshToken)
+        public async Task<IActionResult> RefreshToken([FromBody]RefreshTokenRequest refreshToken)
         {
-            if (string.IsNullOrEmpty(refreshToken))
+            if (string.IsNullOrEmpty(refreshToken.RefreshToken))
                 return Unauthorized(new {message= "Refresh token is missing" });
 
             try
             {
-                var userRefresh = await _context.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
+                var userRefresh = await _context.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken.RefreshToken);
                 if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.Now)
                 {
                     return Unauthorized(new { message = "Refresh token has expried" });
@@ -278,18 +293,12 @@ namespace API.Controllers
             var msg = await _iAuthenticate.DoResetPassword(data);
             if (msg.Length > 0)
             {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = msg,
-                    errorCode = "Reset_Failed"
+                return BadRequest(new  {
+                    success = false, message = msg,  errorCode = "Reset_Failed"
                 });
             }
-
-            return Ok(new
-            {
-                success = true,
-                message = "Mật khẩu mới đã được thiết lập!"
+            return Ok(new {
+                success = true, message = "Mật khẩu mới đã được thiết lập!"
             });
         }
         [HttpGet("logout")]
@@ -299,20 +308,73 @@ namespace API.Controllers
             if (msg.Length > 0) return BadRequest(new { success = false, message = msg });
             return Ok(new { success = true, message = "Đăng xuất thành công!" });
         }
+      
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] PostRequest re)
+        {
+            if (re == null || string.IsNullOrWhiteSpace(re.Input))
+            {
+                return BadRequest(new  {
+                    success = false,  message = "OTP không được để trống"
+                });
+            }
+            var msg = await _iAuthenticate.DoVerifyOTP(re.Input, _httpContextAccessor.HttpContext);
+            if (msg.Length > 0)
+            {
+                return BadRequest(new  {
+                    success = false, message = msg,
+                });
+            }
 
-        // Request model
+            return Ok(new  {
+                success = true, message = "Xác thực thành công."
+            });
+        }
+
+        [HttpGet("resend-otp")]
+        public async Task<IActionResult> ResendOtp()
+        {
+            var emailVerify = HttpContext.Session.GetString("email_verify");
+            if (string.IsNullOrEmpty(emailVerify))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Vui lòng đăng nhập lại để được verify tài khoản.",
+                    email = "email_empty",
+                });
+            }
+            var msg = await EmailHandler.SendOtpAndSaveSession(emailVerify, HttpContext);
+            if (msg.Length > 0)
+            {
+                return BadRequest(new {
+                    success = false,  message = msg,
+                });
+            }
+            return Ok(new  {
+                success = true,  message = "Mã OTP đã được gửi vào email của bạn!",
+            });
+        }
+
         public class FacebookLoginRequest
         {
             public string AccessToken { get; set; }
         }
 
-        // Response model từ Facebook
         public class FacebookUser
         {
             public string Id { get; set; }
             public string Name { get; set; }
             public string Email { get; set; }
         }
+        public class PostRequest
+        {
+            public string Input { get; set; }
+        }
 
+        public class RefreshTokenRequest
+        {
+            public string RefreshToken { get; set; }
+        }
     }
 }

@@ -44,6 +44,8 @@ namespace API.Utilities
             if (string.IsNullOrEmpty(emailVerify))
                 httpContext.Session.SetString("email_verify", email); // Lưu email to verify
 
+            await httpContext.Session.CommitAsync(); // ✅ Đảm bảo session được lưu
+
             string msg = await SendEmailAsync(email, "Xác thực Email của bạn", $"Đây là mã xác thực của bạn: {otp}");
             if (msg.Length > 0) return msg;
             return "";

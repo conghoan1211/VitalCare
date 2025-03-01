@@ -52,7 +52,7 @@ namespace API.Controllers
         }
 
         [HttpGet("get-list-admin")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetListAdmin()
         {
             var (message, list) = await _iVideoService.GetList(false, "created_dec");
@@ -81,12 +81,26 @@ namespace API.Controllers
                 success = true, message = "Get detail successfully!",  data = detail
             });
         }
+        [HttpGet("list-cate")]
+        public async Task<IActionResult> GetCategories()
+        {
+            var (message, detail) = await _iVideoService.GetCategory();
+            if (message.Length > 0)
+            {
+                return BadRequest(new  {
+                    success = false,  message,
+                });
+            }
+            return Ok(new  {
+                success = true, message = "Get detail successfully!",  data = detail
+            });
+        }
 
         [HttpPost("delete")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(string videoId)
+        public async Task<IActionResult> Delete([FromBody] VideoRequest request)
         {
-            var message = await _iVideoService.DeleteVideo(videoId);
+            var message = await _iVideoService.DeleteVideo(request.VideoId);
             if (message.Length > 0)
             {
                 return BadRequest(new {
@@ -145,10 +159,10 @@ namespace API.Controllers
 
         [HttpPost("change-active")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ChangeActive(string videoId)
+        public async Task<IActionResult> ChangeActive([FromBody] VideoRequest request)
         {
             string userToken = GetUserId();
-            var message = await _iVideoService.ChangeActive(videoId, userToken);
+            var message = await _iVideoService.ChangeActive(request.VideoId, userToken);
             if (message.Length > 0)
             {
                 return BadRequest(new  {
@@ -176,6 +190,9 @@ namespace API.Controllers
                 success = true, message = "Insert or update successfully!",
             });
         }
-
+    }
+    public class VideoRequest
+    {
+        public string VideoId { get; set; }
     }
 }

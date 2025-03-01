@@ -16,7 +16,6 @@ ConfigManager.CreateManager(builder.Configuration);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(Program));
@@ -31,7 +30,10 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Thời gian chờ phiên
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true; // Chắc chắn cookie có mặt
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // 🔒 Chỉ gửi cookie qua HTTPS
+    options.Cookie.SameSite = SameSiteMode.None; // ⚠️ Cho phép chia sẻ session giữa FE & BE khác domain
 });
+builder.Services.AddHttpContextAccessor();
 
 // Add JWT Authentication
 builder.Services.AddAuthentication(options =>
@@ -92,7 +94,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://192.168.1.7:3000")  // Đổi thành domain frontend
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://192.168.1.7:3000", " https://d631-2402-800-61b0-47da-ad6f-fed8-36a2-2cd9.ngrok-free.app")  // Đổi thành domain frontend
                   .AllowCredentials() // Quan trọng để cookie hoạt động
                   .AllowAnyMethod()
                   .AllowAnyHeader()
