@@ -14,6 +14,7 @@ namespace API.Configurations
             CreateMap<User, ProfileVM>();
             CreateMap<User, UpdateProfileModels>();
             CreateMap<User, UserLoginVM>();
+            CreateMap<User, EditAccountVM>();
 
             // Post mapping
             CreateMap<Post, PostListVM>();

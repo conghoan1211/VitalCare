@@ -52,7 +52,7 @@ namespace API.Controllers
         }
 
         [HttpGet("get-list-admin")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetListAdmin()
         {
             var (message, list) = await _iVideoService.GetList(false, "created_dec");

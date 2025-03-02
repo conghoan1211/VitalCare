@@ -172,12 +172,13 @@ namespace API.Services
             var product = await _context.Products.FirstOrDefaultAsync(x => x.ProductId == productId);
             if (product == null) return ("Product is not available!");
 
-            product.IsDeleted = true;
-            product.UpdatedAt = DateTime.UtcNow;
-            product.UpdateUser = userid;
-            _context.Products.Update(product);
+            _context.Products.Remove(product);
             await _context.SaveChangesAsync();
-
+            if (product.ImageUrl.Any() || product.ImageUrl != null)                 // Xóa ảnh đã upload lên S3 nếu có lỗi
+            {
+                string key = $"{UrlS3.Product}{product.ProductId}";
+                await _s3Service.DeleteFolderAsync(key);
+            }
             return string.Empty;
         }
 

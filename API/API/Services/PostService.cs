@@ -80,6 +80,7 @@ namespace API.Services
                     Thumbnail = x.Thumbnail,
                     Username = x.User.Username,
                     Avatar = x.User.Avatar,
+                    Privacy = x.Privacy
                 })
                 .FirstOrDefaultAsync(x => x.PostId == postId);
             if (post == null) return ("No post available!", null);
@@ -132,7 +133,7 @@ namespace API.Services
                         string folderKey = $"{UrlS3.Post}{input.PostId}/";
                         await _s3Service.DeleteFolderAsync(folderKey);
                     }
-                    string key = $"{UrlS3.Product}{input.PostId}";
+                    string key = $"{UrlS3.Post}{input.PostId}";
                     thumbnailUrl = await _s3Service.UploadFileAsync(key, input.Thumbnail);
                     post.Thumbnail = thumbnailUrl;
                 }

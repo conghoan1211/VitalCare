@@ -116,6 +116,7 @@ namespace InstagramClone.Utilities
             if (user == null) throw new Exception("User not found");
             user.RefreshToken = refreshToken;
             user.ExpiryDateToken = DateTime.UtcNow.AddDays(7);
+            user.LastLogin = DateTime.UtcNow;
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();

@@ -116,6 +116,8 @@ namespace API.Services
                     {
                         await _s3Service.DeleteFileAsync(oldAvatarUrl);
                     }
+                    string key = $"{UrlS3.Profile}{userid}";
+                    await _s3Service.DeleteFolderAsync(key);
                 }
                 string newAvatarKey = $"{UrlS3.Profile}{userid}/{input.Image.FileName}";
                 string url = await _s3Service.UploadFileAsync(newAvatarKey, input.Image);

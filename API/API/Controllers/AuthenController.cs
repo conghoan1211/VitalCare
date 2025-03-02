@@ -207,7 +207,8 @@ namespace API.Controllers
 
             return Ok(new
             {
-                isAuthenticated = true,  data 
+                isAuthenticated = true,
+                data
             });
         }
         [HttpPost("refresh-token")]

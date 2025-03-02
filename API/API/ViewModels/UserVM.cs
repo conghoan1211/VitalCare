@@ -25,9 +25,11 @@ namespace API.ViewModels
         public int? RoleId { get; set; }
     }
 
-    public class UserLogout
+    public class EditAccountVM
     {
         public string? UserId { get; set; }
+        public int? RoleId { get; set; }
+        public bool? IsActive { get; set; }
     }
 
     public class UserVM

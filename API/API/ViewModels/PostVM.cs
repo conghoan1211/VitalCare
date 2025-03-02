@@ -55,6 +55,7 @@ namespace API.ViewModels
         public string? Avatar { get; set; }
         public string? Content { get; set; }
         public int? Views { get; set; }
+        public int? Privacy { get; set; }
         public int? Likes { get; set; }
         public int? Comments { get; set; }
         public string? Tags { get; set; }

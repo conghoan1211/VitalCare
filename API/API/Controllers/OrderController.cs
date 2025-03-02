@@ -19,6 +19,7 @@ namespace API.Controllers
         }
 
         [HttpPost("CreateOrder")]
+        [Authorize]
         public async Task<IActionResult> CreateOrder([FromBody] InsertOrderVM input)
         {
             var (message, data) = await _iOrderService.CreateOrder(input);
@@ -42,6 +43,7 @@ namespace API.Controllers
         }
 
         [HttpPost("SetStatus")]
+        [Authorize]
         public async Task<IActionResult> SetStatus([FromBody] OrderStatusUpdateRequest? request)
         {
             var message = await _iOrderService.SetStatus(request.OrderId, request.Status);
@@ -54,6 +56,7 @@ namespace API.Controllers
         }
 
         [HttpGet("GetListByUserId")]
+        [Authorize]
         public async Task<IActionResult> GetOrderByUserId(string userId)
         {
             var (message, orders) = await _iOrderService.GetOrderByUserId(userId);
