@@ -138,7 +138,6 @@ namespace API.Services
                     post.Thumbnail = thumbnailUrl;
                 }
 
-                post.Thumbnail = thumbnailUrl ?? "";
                 post.Author = input.Author;
                 post.CategoryId = input.CategoryId;
                 post.Content = input.Content;

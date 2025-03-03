@@ -72,7 +72,7 @@ namespace API.Controllers
             {
                 return BadRequest(new { success = false, message });
             }
-            return Ok(new { success = true, message = "Lấy bài viết thành công."});
+            return Ok(new { success = true, message = "Tạo bài viết thành công."});
         }
 
         [HttpPut("DoChangePrivacy")]

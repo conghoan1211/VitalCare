@@ -10,7 +10,6 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
     public class AmazonS3Controller : ControllerBase
     {
         private readonly IAmazonS3Service _s3Service;
@@ -25,6 +24,7 @@ namespace API.Controllers
 
         // Upload file to S3
         [HttpPost("upload")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UploadFile(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -40,6 +40,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("delete")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteFile(string filekey)
         {
             if (string.IsNullOrEmpty(filekey))
