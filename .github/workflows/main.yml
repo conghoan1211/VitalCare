@@ -15,6 +15,7 @@ jobs:
     #dowload code into vps
     - name: Checkout code
       uses: actions/checkout@v2
-    #build on vps by docker
-    - name: Run docker compose
+    - name: Change to correct directory
+      run: cd /home/github-runner/actions-runner && ls -l
+    - name: Run Docker Compose
       run: docker compose up --build -d
