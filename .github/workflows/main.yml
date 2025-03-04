@@ -14,7 +14,7 @@ jobs:
     steps:
     #dowload code into vps
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v2
     #build on vps by docker
     - name: Run docker compose
       run: docker compose up --build -d
