@@ -16,6 +16,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Change to correct directory
-      run: cd /home/github-runner/actions-runner && ls -l
+      run: cd "/home/github-runner/actions-runner/cicd work" && ls -l
     - name: Run Docker Compose
       run: docker compose up --build -d
