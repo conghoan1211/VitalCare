@@ -16,7 +16,5 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     #build on vps by docker
-    - name: Run `docker compose`
-      run: |
-        docker compose down  # Dừng container cũ (nếu có)
-        docker compose up --build -d  # Build và chạy lại container mới
+    - name: Run docker compose
+      run: docker compose up --build -d
