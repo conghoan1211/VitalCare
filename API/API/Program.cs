@@ -167,7 +167,7 @@ app.UseCors("AllowFrontend");
 
 app.Use(async (context, next) =>
 {
-    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://localhost:3000" );
+    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://localhost:3000");
     context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
     context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -187,12 +187,8 @@ app.Use(async (context, next) =>
     else await next();
 });
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseAuthentication();
 app.UseAuthorization();
