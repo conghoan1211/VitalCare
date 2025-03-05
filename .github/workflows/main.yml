@@ -1,20 +1,20 @@
 name: Toi muon deploy
-#trigger cái job này khi push lên nhánh nào: => đẩy code lên main thì tự trigger
 
+#sẽ trigger cái job này khi đẩy code lên nhánh nào: => đẩy code lên main thì tự trigger
 on:
   push:
     branches:
-      - master
+      - main
 
-#jobs maf nos sex khi push code
-jobs: 
+#những công việc mà no sẽ khi ddaayr code
+jobs:
   docker-compose:
     runs-on: self-hosted
     environment: docker
     steps:
-    #dowload code into vps
+    # tải code về vps
     - name: Checkout code
-      uses: actions/checkout@v4
-    #build on vps by docker
-    - name: Run docker compose
+      uses: actions/checkout@v2 
+    #build tại vps bằng docker thì sau đó con backend sẽ chạy ở docker trong vps
+    - name: Run `docker compose`
       run: docker compose up --build -d
