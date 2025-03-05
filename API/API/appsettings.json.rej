@@ -1,0 +1,13 @@
+diff a/appsettings.json b/appsettings.json	(rejected hunks)
+@@ -26,8 +26,8 @@
+   },
+ 
+   "Google": {
+-    "ClientId": "700062141891-nrurdokn2k70lsci0tmuqdbei6lqjfi4.apps.googleusercontent.com",
+-    "ClientSecret": "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",
++    "ClientId": " ",
++    "ClientSecret": "",
+     "RedirectUri": "/google-login"
+   }
+ }
+\ No newline at end of file

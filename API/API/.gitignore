@@ -1,5 +1,3 @@
 bin/
 obj/
-appsettings.json.rej
-/appsettings.json
 .env
