@@ -187,7 +187,7 @@ app.Use(async (context, next) =>
     else await next();
 });
 
-app.UseSwagger();
+app.UseSwagger(); //coment
 app.UseSwaggerUI();
 
 app.UseAuthentication();
