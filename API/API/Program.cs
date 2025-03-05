@@ -1,6 +1,7 @@
 ﻿using API.Configurations;
 using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.OData;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -94,7 +95,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://192.168.1.7:3000", " https://d631-2402-800-61b0-47da-ad6f-fed8-36a2-2cd9.ngrok-free.app")  // Đổi thành domain frontend
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://192.168.1.7:3000", " https://vitalcare.io.vn")  // Đổi thành domain frontend
                   .AllowCredentials() // Quan trọng để cookie hoạt động
                   .AllowAnyMethod()
                   .AllowAnyHeader()
@@ -151,10 +152,11 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
+//builder.Services.AddDataProtection()
+//    .PersistKeysToFileSystem(new DirectoryInfo("/home/app/.aspnet/DataProtection-Keys"));
 var app = builder.Build();
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+//app.UseStaticFiles();
 app.UseSession();
 app.UseCors("AllowFrontend");
 
@@ -165,14 +167,14 @@ app.UseCors("AllowFrontend");
 //    await next();
 //});
 
-app.Use(async (context, next) =>
-{
-    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://localhost:3000");
-    context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-    context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    await next();
-});
+//app.Use(async (context, next) =>
+//{
+//    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://localhost:3000");
+//    context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+//    context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+//    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//    await next();
+//});
 
 app.Use(async (context, next) =>
 {
