@@ -16,6 +16,10 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 
 COPY . /source
 
+RUN apk add icu-libs
+RUN DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+
 WORKDIR /source/API/API
 
 # This is the architecture you’re building for, which is passed in by the builder.
