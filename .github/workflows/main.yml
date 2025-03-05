@@ -4,7 +4,7 @@ name: Toi muon deploy
 on:
   push:
     branches:
-      - main
+      - master
 
 #những công việc mà no sẽ khi ddaayr code
 jobs:
