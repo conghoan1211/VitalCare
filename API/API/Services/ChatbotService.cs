@@ -42,9 +42,8 @@ namespace API.Services
                               Ngoài ra trang web còn có các bài viết, video luyện tập bổ ích cho việc cải thiện sức khỏe cơ xương khớp. \n
                               khi người dùng hỏi 1 sản phẩm cụ thể nào đó thì hãy bảo họ vao trực tiếp trang danh sách sản phẩm hoặc ô tìm kiếm sản phẩm để xem.,
                               thậm chỉ là sản phẩm đó nếu ko có, thì bảo họ tham khảo các sản phẩm khác.\n
-
                               + Các câu trả lời của bạn phải hạn chế việc sử dụng chữ đậm hoặc nghiêng. \n
-                              + Các câu trả lời của bạn chỉ được tối đa 600 token\n
+                              + Các câu trả lời của bạn chỉ được tối đa 1000 token\n
                               + Câu trả lời cần phải chọn vẹn, không cần quá dài nhưng cần đầy đủ, cô đọng, không được ngắt quãng\n.";
 
         private readonly string UseSystemPrompt = @"Hướng Dẫn Sử Dụng Website 💡 Cách đăng ký tài khoản & đăng nhập:
@@ -56,16 +55,13 @@ namespace API.Services
                                             4️⃣ Đăng nhập bằng tài khoản vừa tạo.""
                                             Cách 2:
                                             đăng kí trực tiếp vào nút đăng nhập bằng google
-
                                             💡 Cách đặt hàng & thanh toán:
                                             Khi người dùng hỏi về cách mua hàng, hãy hướng dẫn họ chi tiết:
                                             1️⃣ Chọn sản phẩm muốn mua và nhấn 'Thêm vào giỏ hàng'.
                                             2️⃣ Vào giỏ hàng, kiểm tra sản phẩm, số lượng.
                                             3️⃣ Nhập địa chỉ nhận hàng, chọn phương thức thanh toán.
                                             4️⃣ Nhấn 'Xác nhận đơn hàng' để hoàn tất.
-
                                         \n cách cập nhật thông tin cá nhân hay đổi mật khẩu, theo dõi đơn hàng, hãy bảo họ vào trang profile, ấn vào hình avatar ở góc trên bên phải để vào và thực hiện";
-
 
 
         private readonly string ImportantSystemPrompt = @"Sau mỗi khi đưa ra các phương pháp điều trị hay các tư vấn, bạn hãy khuyến khích người dùng tham khảo các bài viết, các sản phẩm hoặc video luyện tập ở ngay trên web VitalCare của chúng ta;
@@ -73,10 +69,8 @@ namespace API.Services
                                            - Ưu tiên: Các vấn đề liên quan đến VitalCare và chăm sóc sức khỏe xương khớp.
                                            - Mở rộng: Có thể trả lời các câu hỏi nằm ngoài phạm vi trên, nhưng chỉ ở mức độ vừa phải, không đi quá sâu vào chi tiết.
                                            - Cảnh báo: Nếu cuộc trò chuyện bắt đầu đi quá xa khỏi chủ đề sức khỏe và VitalCare, tôi sẽ nhắc nhở người dùng và hướng họ trở lại các chủ đề phù hợp.
-                                 
                                             \nKhi người dùng hỏi ai đã sáng lập hay phát triển ra website VitalCare. Bạn cần phải trả lời là do 1 nhóm sinh viên trường đại học FPT phát triển.\n
                                             trong đó bên Marketing, nghiên cứu thị trường là các bạn: Lê Nguyễn Tùng Dương, Lương Tuệ Quang, Nguyễn Trà My. Bên phát triển Web là : Phạm Công Hoan, Cao Trường Sơn, Chu Thiên Quân. ";
-
         #endregion
 
         public ChatbotService(IMapper mapper, Exe201Context context, HttpClient httpClient)
@@ -179,9 +173,9 @@ namespace API.Services
                     generationConfig = new
                     {
                         temperature = 1.0,
-                        topP = 0.7, // Giảm xuống
-                        topK = 100, // Tăng lên
-                        maxOutputTokens = 600,
+                        //topP = 0.7, // Giảm xuống
+                        //topK = 100, // Tăng lên
+                        maxOutputTokens = 1000,
                         responseMimeType = "text/plain"
                     },
                     safetySettings = new[] {
@@ -205,7 +199,7 @@ namespace API.Services
                     return ("Lỗi khi gọi API AI: Không nhận được phản hồi hợp lệ.", null);
 
                 string aiResponse = responseData.candidates[0].content.parts[0].text;
-
+                Console.WriteLine($"AI Response: {aiResponse}");
                 // Lưu tin nhắn AI vào DB
                 var aiMessage = new Message
                 {
