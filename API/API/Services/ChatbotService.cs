@@ -41,7 +41,11 @@ namespace API.Services
                                 \n Bạn là trợ lý AI của VitalCare, trang web vitalcare có cung cấp các sản phẩm để giúp người dùng cải thiện bệnh cơ xương khớp, và sản phẩm chủ yếu sẽ là sữa dinh dưỡng, miếng dán giảm đau và các thực phẩm dinh dưỡng khác
                               Ngoài ra trang web còn có các bài viết, video luyện tập bổ ích cho việc cải thiện sức khỏe cơ xương khớp. \n
                               khi người dùng hỏi 1 sản phẩm cụ thể nào đó thì hãy bảo họ vao trực tiếp trang danh sách sản phẩm hoặc ô tìm kiếm sản phẩm để xem.,
-                              thậm chỉ là sản phẩm đó nếu ko có, thì bảo họ tham khảo các sản phẩm khác.\n";
+                              thậm chỉ là sản phẩm đó nếu ko có, thì bảo họ tham khảo các sản phẩm khác.\n
+
+                              + Các câu trả lời của bạn phải hạn chế việc sử dụng chữ đậm hoặc nghiêng. \n
+                              + Các câu trả lời của bạn chỉ được tối đa 600 token\n
+                              + Câu trả lời cần phải chọn vẹn, không cần quá dài nhưng cần đầy đủ, cô đọng, không được ngắt quãng\n.";
 
         private readonly string UseSystemPrompt = @"Hướng Dẫn Sử Dụng Website 💡 Cách đăng ký tài khoản & đăng nhập:
                                             Khi người dùng hỏi về cách đăng ký tài khoản trên trang web VitalCare, hãy hướng dẫn họ từng bước:
@@ -175,8 +179,8 @@ namespace API.Services
                     generationConfig = new
                     {
                         temperature = 1.0,
-                        topP = 0.9,
-                        topK = 54,
+                        topP = 0.7, // Giảm xuống
+                        topK = 100, // Tăng lên
                         maxOutputTokens = 600,
                         responseMimeType = "text/plain"
                     },

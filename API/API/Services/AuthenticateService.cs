@@ -97,7 +97,7 @@ namespace API.Services
             if (!user.Password.ToUpper().Equals(mkMd5.ToUpper())) return ("Mật khẩu không chính xác", null);
 
             if (user.IsVerified == false) return (ConstMessage.ACCOUNT_UNVERIFIED, null);
-            if (user.IsActive == false) return ($"Tài khoản của bạn đã bị khóa đến ngày {user.BlockUntil}", null);
+            if (user.IsActive == false) return ($"Tài khoản đã bị vô hiệu hóa, liên hệ Admin để biết thêm chi tiết!", null);
 
             user.Status = (int)UserStatus.Active;
             user.LastLogin = DateTime.Now;

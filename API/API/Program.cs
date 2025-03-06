@@ -117,7 +117,7 @@ builder.Services.AddLogging(builder =>
     builder.AddDebug();
 });
 
-builder.Services.AddAuthorization(options =>              //  Add Authentication
+builder.Services.AddAuthorization(options =>              //  Add Authentication Policy
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
