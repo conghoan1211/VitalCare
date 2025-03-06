@@ -95,7 +95,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://ui.vitalcare.io.vn")  // Đổi thành domain frontend
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://ui.vitalcare.io.vn", "https://vitalcare.io.vn")
                   .AllowCredentials() // Quan trọng để cookie hoạt động
                   .AllowAnyMethod()
                   .AllowAnyHeader()
@@ -158,7 +158,7 @@ var app = builder.Build();
 app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseSession();
-
+app.UseRouting();
 //app.Use(async (context, next) =>
 //{
 //    context.Response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin");
