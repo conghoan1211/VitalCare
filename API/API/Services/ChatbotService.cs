@@ -298,7 +298,7 @@ namespace API.Services
             if (conversation == null) return "Conversation not found!";
 
             conversation.Title = title;
-            conversation.UpdatedAt = DateTime.Now;
+            conversation.UpdatedAt = DateTime.UtcNow;
             _context.Conversations.Update(conversation);
             await _context.SaveChangesAsync();
             return "";

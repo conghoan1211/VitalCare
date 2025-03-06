@@ -57,7 +57,7 @@ namespace API.Services
 
             user.Password = newPasswordMd5;
             user.UpdateUser = user.UserId;
-            user.UpdateAt = DateTime.Now;
+            user.UpdateAt = DateTime.UtcNow;
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
             return "";
@@ -78,7 +78,7 @@ namespace API.Services
 
                 user.Password = mkMd5;
                 user.UpdateUser = user.UserId;
-                user.UpdateAt = DateTime.Now;
+                user.UpdateAt = DateTime.UtcNow;
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
             }
@@ -100,7 +100,7 @@ namespace API.Services
             if (user.IsActive == false) return ($"Tài khoản đã bị vô hiệu hóa, liên hệ Admin để biết thêm chi tiết!", null);
 
             user.Status = (int)UserStatus.Active;
-            user.LastLogin = DateTime.Now;
+            user.LastLogin = DateTime.UtcNow;
             user.LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString();
             await _context.SaveChangesAsync();
 
@@ -137,9 +137,9 @@ namespace API.Services
                     IsActive = true,
                     IsDisable = false,
                     IsVerified = input.VerifiedEmail,
-                    CreateAt = DateTime.Now,
+                    CreateAt = DateTime.UtcNow,
                     CreateUser = userid,
-                    LastLogin = DateTime.Now,
+                    LastLogin = DateTime.UtcNow,
                     LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString(),
                     Bio = input.ProfileLink,
                     Avatar = input.Picture ?? "default-avatar.png",
@@ -150,7 +150,7 @@ namespace API.Services
             else                                              // improve this 
             {
                 user.GoogleId = input.Id;
-                user.LastLogin = DateTime.Now;
+                user.LastLogin = DateTime.UtcNow;
                 user.LastLoginIp = httpContext.Connection.RemoteIpAddress?.ToString();
                 hasPassword = !string.IsNullOrEmpty(user.Password);
                 _context.Users.Update(user);
@@ -177,7 +177,7 @@ namespace API.Services
             if (user == null) return "User not found!";
 
             user.Status = (int)UserStatus.Inactive;
-            user.LastLogin = DateTime.Now;
+            user.LastLogin = DateTime.UtcNow;
             user.RefreshToken = null;
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
@@ -212,7 +212,7 @@ namespace API.Services
                 IsActive = true,
                 IsDisable = false,
                 IsVerified = false,
-                CreateAt = DateTime.Now,
+                CreateAt = DateTime.UtcNow,
                 UpdateAt = null,
                 CreateUser = userid,
                 Avatar = "default-avatar.png",
@@ -238,7 +238,7 @@ namespace API.Services
 
             user.Password = mkMd5;
             user.UpdateUser = user.UserId;
-            user.UpdateAt = DateTime.Now;
+            user.UpdateAt = DateTime.UtcNow;
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
             return "";
@@ -293,7 +293,7 @@ namespace API.Services
         {
             var userRefresh = await _context.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
 
-            if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.Now)
+            if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.UtcNow)
             {
                 return null;
             }
