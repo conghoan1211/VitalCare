@@ -72,7 +72,7 @@ namespace API.Services
             user.Sex = updatedProfile.Sex;
             user.Dob = updatedProfile.Dob;
             user.Username = updatedProfile.UserName;
-            user.UpdateAt = DateTime.Now;
+            user.UpdateAt = DateTime.UtcNow;
             user.Address = updatedProfile.Address;
             user.ProvinceId = updatedProfile.ProvinceId;
             user.DistrictId = updatedProfile.DistrictId;

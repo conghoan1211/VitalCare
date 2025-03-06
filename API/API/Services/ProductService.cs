@@ -106,7 +106,7 @@ namespace API.Services
                         CurrentPrice = input.CurrentPrice,
                         NewPrice = input.NewPrice,
                         CategoryId = input.CategoryId,
-                        CreatedAt = DateTime.Now,
+                        CreatedAt = DateTime.UtcNow,
                         CreateUser = userId,
                         Description = input.Description,
                         ProductUrl = input.ProductUrl ?? uploadedUrls.First(),
@@ -147,7 +147,7 @@ namespace API.Services
                     oldProduct.UpdateUser = userId;
                     oldProduct.Description = input.Description;
                     oldProduct.Stock = input.Stock;
-                    oldProduct.UpdatedAt = DateTime.Now;
+                    oldProduct.UpdatedAt = DateTime.UtcNow;
 
                     _context.Products.Update(oldProduct);
                 }

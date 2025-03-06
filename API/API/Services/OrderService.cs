@@ -48,8 +48,8 @@ namespace API.Services
                         PaymentMethod = input.PaymentMethod,
                         Total = input.Total,
                         ShipPrice = input.ShipPrice,
-                        CreatedAt = DateTime.Now,
-                        OrderDate = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        OrderDate = DateTime.UtcNow
                     };
                     _context.Orders.Add(order);
                     await _context.SaveChangesAsync();

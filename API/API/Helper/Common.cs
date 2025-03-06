@@ -74,7 +74,7 @@ namespace API.Helper
 
         public static string GenerateOrderId()
         {
-            DateTime now = DateTime.Now;
+            DateTime.UtcNow = DateTime.UtcNow;
             string orderId = now.ToString("yyMMddHH");
             string chars = Utils.GenRandomCharacter(5);
 

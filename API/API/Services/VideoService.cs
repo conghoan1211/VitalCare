@@ -81,7 +81,7 @@ namespace API.Services
                     VideoId = Guid.NewGuid().ToString(),
                     Author = input.Author,
                     CategoryId = input.CategoryId,
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
                     Duration = input.Duration,
                     IsActive = input.IsActive,
                     Title = input.Title,
@@ -105,7 +105,7 @@ namespace API.Services
                 oldVideo.Title = input.Title;
                 oldVideo.VideoUrl = input.VideoUrl;
                 oldVideo.Description = input.Description;
-                oldVideo.UpdatedAt = DateTime.Now;
+                oldVideo.UpdatedAt = DateTime.UtcNow;
                 oldVideo.UpdateUser = userId;
 
                 _context.Videos.Update(oldVideo);
@@ -157,7 +157,7 @@ namespace API.Services
             var video = await _context.Videos.FirstOrDefaultAsync(x => x.VideoId == videoId);
             if (video == null) return "Video not found!";
             video.IsActive = !video.IsActive;
-            video.UpdatedAt = DateTime.Now;
+            video.UpdatedAt = DateTime.UtcNow;
             video.UpdateUser = userId;
             _context.Videos.Update(video);
             await _context.SaveChangesAsync();

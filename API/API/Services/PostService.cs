@@ -115,7 +115,7 @@ namespace API.Services
                     Tags = input.Tags,
                     Content = input.Content,
                     CreateUser = userId,
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
                     Privacy = input.Privacy,
                     Thumbnail = thumbnailUrl ?? "",
                 };
@@ -142,7 +142,7 @@ namespace API.Services
                 post.CategoryId = input.CategoryId;
                 post.Content = input.Content;
                 post.Title = input.Title;
-                post.UpdatedAt = DateTime.Now;
+                post.UpdatedAt = DateTime.UtcNow;
                 post.UpdateUser = userId;
                 post.IsComment = input.IsComment;
                 post.PinTop = input.PinTop;
