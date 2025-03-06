@@ -95,7 +95,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", " https://ui.vitalcare.io.vn")  // Đổi thành domain frontend
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://ui.vitalcare.io.vn")  // Đổi thành domain frontend
                   .AllowCredentials() // Quan trọng để cookie hoạt động
                   .AllowAnyMethod()
                   .AllowAnyHeader()
@@ -155,10 +155,9 @@ builder.Services.AddSwaggerGen(c =>
 //builder.Services.AddDataProtection()
 //    .PersistKeysToFileSystem(new DirectoryInfo("/home/app/.aspnet/DataProtection-Keys"));
 var app = builder.Build();
-app.UseHttpsRedirection();
-//app.UseStaticFiles();
-app.UseSession();
 app.UseCors("AllowFrontend");
+app.UseHttpsRedirection();
+app.UseSession();
 
 //app.Use(async (context, next) =>
 //{
@@ -167,14 +166,14 @@ app.UseCors("AllowFrontend");
 //    await next();
 //});
 
-//app.Use(async (context, next) =>
-//{
-//    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://localhost:3000");
-//    context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-//    context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-//    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//    await next();
-//});
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://ui.vitalcare.io.vn");
+    context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+    context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    await next();
+});
 
 app.Use(async (context, next) =>
 {
