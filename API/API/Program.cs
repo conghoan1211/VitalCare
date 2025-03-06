@@ -95,7 +95,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://ui.vitalcare.io.vn", "https://vitalcare.io.vn")
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://ui.vitalcare.io.vn")  // Đổi thành domain frontend
                   .AllowCredentials() // Quan trọng để cookie hoạt động
                   .AllowAnyMethod()
                   .AllowAnyHeader()
@@ -205,10 +205,5 @@ app.Use(async (context, next) =>
 });
 app.MapControllers();
 
-app.Use(async (context, next) =>
-{
-    context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-    context.Response.Headers["Pragma"] = "no-cache";
-    context.Response.Headers["Expires"] = "0";
-    await next();
-});
+await app.RunAsync();
+
