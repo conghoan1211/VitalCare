@@ -95,7 +95,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://192.168.1.7:3000", " https://vitalcare.io.vn")  // Đổi thành domain frontend
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", " https://ui.vitalcare.io.vn")  // Đổi thành domain frontend
                   .AllowCredentials() // Quan trọng để cookie hoạt động
                   .AllowAnyMethod()
                   .AllowAnyHeader()
