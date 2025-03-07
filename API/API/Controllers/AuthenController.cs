@@ -189,7 +189,7 @@ namespace API.Controllers
                 if (!string.IsNullOrEmpty(refreshToken))  
                 {
                     var userRefresh = _context.Users.FirstOrDefault(x => x.RefreshToken == refreshToken);
-                    if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.Now)
+                    if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.UtcNow)
                     {
                         return Unauthorized(new { message = "Refresh token has expired" });
                     }
@@ -220,7 +220,7 @@ namespace API.Controllers
             try
             {
                 var userRefresh = await _context.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken.RefreshToken);
-                if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.Now)
+                if (userRefresh == null || userRefresh.ExpiryDateToken < DateTime.UtcNow)
                 {
                     return Unauthorized(new { message = "Refresh token has expried" });
                 }
