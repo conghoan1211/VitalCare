@@ -1,4 +1,5 @@
 ﻿using API.Models;
+using API.RabbitMQ;
 using API.Services;
 using API.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -21,14 +22,11 @@ namespace API.Controllers
 
         [HttpPost("CreateOrder")]
         [Authorize]
-        public async Task<IActionResult> CreateOrder([FromBody] InsertOrderVM input)
+        public IActionResult CreateOrder([FromBody] InsertOrderVM input)
         {
-            var (message, data) = await _iOrderService.CreateOrder(input);
-            if (message.Length > 0)
-            {
-                return BadRequest(new { success = false, message, errorCode = "CREATE_ORDER_FAILED" });
-            }
-            return Ok(new { success = true, message = "Tạo đơn hàng thành công.", data });
+            var rabbit = new OrderProducer();
+            rabbit.SendOrder(input);
+            return Ok(new { success = true, message = "Đơn hàng đã được gửi về hệ thống để xử lý.", data = input });
         }
 
         [HttpGet("GetAllOrder")]

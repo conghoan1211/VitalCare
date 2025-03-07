@@ -1,4 +1,5 @@
 ﻿using API.Configurations;
+using API.RabbitMQ;
 using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -155,6 +156,8 @@ builder.Services.AddSwaggerGen(c =>
 //builder.Services.AddDataProtection()
 //    .PersistKeysToFileSystem(new DirectoryInfo("/home/app/.aspnet/DataProtection-Keys"));
 var app = builder.Build();
+ 
+
 app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseSession();
@@ -162,7 +165,7 @@ app.UseRouting();
 
 app.Use(async (context, next) =>
 {
-    context.Response.Headers["Access-Control-Allow-Origin"] = "https://ui.vitalcare.io.vn";
+    context.Response.Headers["Access-Control-Allow-Origin"] = "https://localhost:3000";
     context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
     context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
     context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
