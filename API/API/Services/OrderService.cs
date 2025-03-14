@@ -99,6 +99,7 @@ namespace API.Services
                         UserID = input.UserID,
                         UserName = input.UserName,
                         Phone = input.Phone,
+                        Email = input.Email,
                         Address = $"{input.DistrictName} - {input.ProvinceName}",
                         ProvinceId = input.ProvinceId,
                         DistrictId = input.DistrictId,
