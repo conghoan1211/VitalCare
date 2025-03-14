@@ -31,6 +31,8 @@ namespace API.ViewModels
         public int PaymentMethod { get; set; }
         public int Total { get; set; }
         public int ShipPrice { get; set; }
+        public string? ProvinceId { get; set; }
+        public string? DistrictId { get; set; }
 
         [Required(ErrorMessage = "Danh sách sản phẩm không được để trống.")]
         public List<OrderDetailVM> Products { get; set; } = new List<OrderDetailVM>();
