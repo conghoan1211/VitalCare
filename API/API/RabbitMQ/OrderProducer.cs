@@ -39,7 +39,6 @@ namespace API.RabbitMQ
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IConnection _connection;
         private readonly IModel _channel;
-
         public OrderConsumerHostedService(IServiceScopeFactory scopeFactory)
         {
             _scopeFactory = scopeFactory;

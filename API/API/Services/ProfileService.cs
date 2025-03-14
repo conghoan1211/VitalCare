@@ -84,8 +84,12 @@ namespace API.Services
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            http.Response.Cookies.Delete("JwtToken");
-            var token = _jwtAuthen.GenerateJwtToken(user, http);
+            // 🔥 Chỉ cập nhật token nếu có HttpContext (tức là gọi từ HTTP request)
+            if (http != null)
+            {
+                http.Response.Cookies.Delete("JwtToken");
+                var token = _jwtAuthen.GenerateJwtToken(user, http);
+            }
             return "";
         }
 
@@ -125,12 +129,14 @@ namespace API.Services
 
                 user.Avatar = url;
                 _context.Users.Update(user);
+
                 await _context.SaveChangesAsync();
-
-                // Update the JWT token
-                http.Response.Cookies.Delete("JwtToken");
-                var token = _jwtAuthen.GenerateJwtToken(user, http);      
-
+                // 🔥 Chỉ cập nhật token nếu có HttpContext (tức là gọi từ HTTP request)
+                if (http != null)
+                {
+                    http.Response.Cookies.Delete("JwtToken");
+                    var token = _jwtAuthen.GenerateJwtToken(user, http);
+                }
                 return ("", url);
             }
             catch (Exception ex)

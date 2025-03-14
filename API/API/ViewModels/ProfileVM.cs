@@ -54,7 +54,7 @@ namespace API.ViewModels
         [Required(ErrorMessage = "Email không được để trống")]
         [StringLength(100, ErrorMessage = "Email quá dài")]
         [EmailAddress(ErrorMessage = "Định dạng Email không đúng")]
-        public string? Email { get; set; }
+        public string? Email { get; set; }                                  // ko nên cho update email, bỏ và sửa lại fe.
         [Required(ErrorMessage = "Vui lòng chọn tỉnh/thành phố.")]
         public string? ProvinceId { get; set; }
         [Required(ErrorMessage = "Vui lòng chọn địa chỉ huyện.")]

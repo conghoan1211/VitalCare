@@ -5,6 +5,7 @@ using AutoMapper;
 using InstagramClone.Utilities;
 using Microsoft.EntityFrameworkCore;
 using API.Helper;
+using static System.Net.WebRequestMethods;
 
 namespace API.Services
 {
@@ -20,10 +21,14 @@ namespace API.Services
     {
         private readonly IMapper _mapper;
         private readonly Exe201Context _context;
+        private readonly IProfileService _profileService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public OrderService(IMapper mapper, Exe201Context context)
+        public OrderService(IMapper mapper, Exe201Context context, IProfileService profileService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
+            _profileService = profileService;
+            _httpContextAccessor = httpContextAccessor;
             _context = context;
         }
 
@@ -86,6 +91,24 @@ namespace API.Services
                     }
 
                     await _context.SaveChangesAsync();
+
+
+                    // 👉 Cập nhật profile người dùng sau khi đặt hàng thành công
+                    var updatedProfile = new UpdateProfileModels
+                    {
+                        UserID = input.UserID,
+                        UserName = input.UserName,
+                        Phone = input.Phone,
+                        Address = $"{input.DistrictName} - {input.ProvinceName}",
+                        ProvinceId = input.ProvinceId,
+                        DistrictId = input.DistrictId,
+                        ProvinceName = input.ProvinceName,
+                        DistrictName = input.DistrictName,
+                        // Sex, Dob có thể để null nếu không truyền từ input
+                    };
+
+                    await _profileService.UpdateProfile(updatedProfile, _httpContextAccessor.HttpContext); // 👈 gọi service update profile
+
                     await transaction.CommitAsync();
 
                     OrderVM orderVm = new OrderVM
