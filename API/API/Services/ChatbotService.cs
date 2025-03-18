@@ -29,26 +29,23 @@ namespace API.Services
 
         #region
         private readonly string AIApiKey = ConfigManager.gI().AiKey;
-        private readonly string AIUri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent";
+        private readonly string AIUri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
         private readonly string InitialSystemPrompt = @"Bạn là trợ lý AI của VitalCare, chuyên tư vấn về sức khỏe xương khớp. Chỉ trả lời các nội dung liên quan đến cơ, xương, khớp, các sản phẩm và nội dung hỗ trợ chăm sóc xương khớp. 
-                                        Không trả lời các câu hỏi ngoài phạm vi này (như thời tiết, tài chính, tâm lý, công nghệ...). Nếu người dùng hỏi ngoài chủ đề xương khớp, hãy lịch sự từ chối và nhắc rằng bạn chỉ hỗ trợ chuyên sâu về sức khỏe cơ xương khớp. 
-                                        Trả lời ngắn gọn, dễ hiểu, ưu tiên giải pháp tự nhiên, bài tập hỗ trợ và khuyên người dùng nên gặp bác sĩ khi cần thiết.";
+                                        Trả lời ngắn gọn, dễ hiểu, ưu tiên giải pháp tự nhiên, bài tập hỗ trợ và khuyên người dùng nên gặp bác sĩ khi cần thiết.
+                                   Chú ý: Sau khi trả lời câu hỏi, hãy nói cho người dùng rằng: '*Câu trả lời trên chỉ mang tính chất tham khảo, quyết định cuối cùng vẫn phụ thuộc vào bạn'. 
+                                nếu là câu hỏi liên quan đến sức khỏe, hãy khuyến khích người dùng tham khảo ý kiến bác sĩ hoặc chuyên gia trước khi quyết định";
 
-        private readonly string SecondarySystemPrompt = @"Trả lời điều trị dựa trên khoa học, giải thích rõ, nêu lợi ích và tác dụng phụ, nhấn mạnh tuân thủ. 
-                                        Website cung cấp sản phẩm (sữa, miếng dán, thực phẩm dinh dưỡng) và nội dung xương khớp.\n
-                                        Hướng người dùng vào danh sách sản phẩm nếu hỏi cụ thể, trả lời trọn vẹn, cô đọng, tối đa 600 token, ít dùng đậm/nghiêng
-                                        Ngoài ra trang web còn có các bài viết, video luyện tập bổ ích cho việc cải thiện sức khỏe cơ xương khớp.
-                                        Sau mỗi lần trả lời câu hỏi của người dùng, bạn cần nhắc họ rằng: 'Câu trả lời trên chỉ mang tính chất tham khảo, quyết định cuối cùng vẫn phụ thuộc vào bạn. Nếu là câu hỏi liên quan đến sức khỏe, hãy khuyến khích người dùng tham khảo ý kiến bác sĩ hoặc chuyên gia trước khi quyết định.'  
-                                        - Nếu là câu hỏi liên quan đến sức khỏe, hãy khuyến khích người dùng tham khảo ý kiến bác sĩ hoặc chuyên gia trước khi quyết định.";
-        private readonly string StrictScopePrompt = @"Chú ý: Tuyệt đối không trả lời các câu hỏi không liên quan đến cơ xương khớp. Nếu phát hiện nội dung hỏi không đúng phạm vi, chỉ phản hồi như sau:
-                                        'Xin lỗi, tôi chỉ hỗ trợ tư vấn về sức khỏe cơ xương khớp. Vui lòng đặt câu hỏi liên quan đến chủ đề này.' 
-                                        Không cố gắng đưa ra câu trả lời cho các lĩnh vực khác.";
+        private readonly string SecondarySystemPrompt = @"Website cung cấp sản phẩm (sữa, miếng dán, thực phẩm dinh dưỡng) và nội dung xương khớp.\n
+                                        Hướng người dùng vào danh sách sản phẩm nếu hỏi cụ thể, trả lời trọn vẹn, cô đọng, tối đa 600 token, ít dùng đậm/nghiêng.";
 
-        private readonly string UseSystemPrompt = @"Hướng dẫn đăng ký VitalCare: nhấn 'Đăng ký', nhập thông tin, xác nhận OTP qua email, hoặc dùng Google. Đặt hàng: thêm vào giỏ, kiểm tra, nhập địa chỉ, chọn thanh toán, xác nhận. Cập nhật thông tin/đơn hàng: vào profile qua avatar góc trên phải";
+        private readonly string StrictScopePrompt = @"Chú ý: Tuyệt đối không trả lời các câu hỏi không liên quan đến cơ xương khớp. Nếu phát hiện nội dung hỏi không đúng phạm vi,
+                                        hãy lịch sự từ chối và nhắc rằng bạn chỉ hỗ trợ chuyên sâu về sức khỏe cơ xương khớp. Không cố gắng đưa ra câu trả lời cho các lĩnh vực khác.";
 
-        private readonly string ImportantSystemPrompt = @"Khi người dùng hỏi ai đã sáng lập hay phát triển ra website VitalCare. Trả lời là do 1 nhóm sinh viên trường đại học FPT Hà Nội phát triển.
-                                        trong đó bên Marketing, nghiên cứu thị trường là các bạn: Lê Nguyễn Tùng Dương, Lương Tuệ Quang, Nguyễn Trà My. Bên phát triển Web là : Phạm Công Hoan, Cao Trường Sơn, Chu Thiên Quân. ";
+        //private readonly string UseSystemPrompt = @"Đặt hàng: thêm vào giỏ, kiểm tra, nhập địa chỉ, chọn thanh toán, xác nhận. Cập nhật thông tin/đơn hàng: vào profile qua avatar góc trên phải";
+
+        //private readonly string ImportantSystemPrompt = @"Khi người dùng hỏi ai đã sáng lập hay phát triển ra website VitalCare. Trả lời là do 1 nhóm sinh viên trường đại học FPT Hà Nội phát triển.
+        //                                trong đó bên Marketing, nghiên cứu thị trường là các bạn: Lê Nguyễn Tùng Dương, Lương Tuệ Quang, Nguyễn Trà My. Bên phát triển Web là : Phạm Công Hoan, Cao Trường Sơn, Chu Thiên Quân. ";
         #endregion
 
         public ChatbotService(IMapper mapper, Exe201Context context, HttpClient httpClient)
@@ -62,6 +59,19 @@ namespace API.Services
         {
             var chatHistory = new List<object>();
 
+
+            // Kiểm tra xem hội thoại này đã có tin nhắn nào từ AI (model) chưa
+            //bool hasAIResponse = await _context.Messages
+            //    .AnyAsync(m => m.ConversationId == conversationId && m.Role == 1);
+
+            // Nếu chưa có tin nhắn từ AI (tức là lần đầu mở), thêm 4 prompt hệ thống
+            //if (!hasAIResponse)
+            //{
+                chatHistory.Add(new { role = "model", parts = new[] { new { text = InitialSystemPrompt } } });
+                chatHistory.Add(new { role = "model", parts = new[] { new { text = SecondarySystemPrompt } } });
+                chatHistory.Add(new { role = "model", parts = new[] { new { text = StrictScopePrompt } } });
+            //}
+
             // Lấy danh sách tin nhắn của cuộc hội thoại
             var messages = await _context.Messages
                 .Where(m => m.ConversationId == conversationId)
@@ -73,40 +83,12 @@ namespace API.Services
                 })
                 .ToListAsync();
 
-            // Kiểm tra xem hội thoại này đã có tin nhắn nào từ AI (model) chưa
-            bool hasAIResponse = messages.Any(m => m.role == "model");
-
-            // Nếu chưa có tin nhắn từ AI (tức là lần đầu mở), thêm 4 prompt hệ thống
-            if (!hasAIResponse)
+            var recentMessages = messages.TakeLast(5); // Chỉ lấy 5 tin gần nhất
+            chatHistory.AddRange(recentMessages.Select(m => new
             {
-                chatHistory.Add(new { role = "model", parts = new[] { new { text = InitialSystemPrompt } } });
-                chatHistory.Add(new { role = "model", parts = new[] { new { text = SecondarySystemPrompt } } });
-                chatHistory.Add(new { role = "model", parts = new[] { new { text = UseSystemPrompt } } });
-                chatHistory.Add(new { role = "model", parts = new[] { new { text = ImportantSystemPrompt } } });
-            }
-
-            // Nếu có hơn 10 tin nhắn, chỉ lấy tin nhắn gần nhất của user
-            if (messages.Count > 10)
-            {
-                var lastUserMessage = messages.LastOrDefault(m => m.role == "user");
-                if (lastUserMessage != null)
-                {
-                    chatHistory.Add(new
-                    {
-                        role = "user",
-                        parts = new[] { new { text = lastUserMessage.content } }
-                    });
-                }
-            }
-            else
-            {
-                // Nếu ít hơn 10 tin nhắn, lấy tất cả
-                chatHistory.AddRange(messages.Select(m => new
-                {
-                    role = m.role,
-                    parts = new[] { new { text = m.content } }
-                }));
-            }
+                role = m.role,
+                parts = new[] { new { text = m.content } }
+            }));
 
             return chatHistory;
         }
@@ -150,10 +132,10 @@ namespace API.Services
                     contents = chatHistory,
                     generationConfig = new
                     {
-                        temperature = 1.0,
+                        temperature = 0.85,
                         //topP = 0.7, // Giảm xuống
                         //topK = 100, // Tăng lên
-                        maxOutputTokens = 1000,
+                        maxOutputTokens = 600,
                         responseMimeType = "text/plain"
                     },
                     safetySettings = new[] {
@@ -177,7 +159,6 @@ namespace API.Services
                     return ("Lỗi khi gọi API AI: Không nhận được phản hồi hợp lệ.", null);
 
                 string aiResponse = responseData.candidates[0].content.parts[0].text;
-                Console.WriteLine($"AI Response: {aiResponse}");
                 // Lưu tin nhắn AI vào DB
                 var aiMessage = new Message
                 {
@@ -273,7 +254,7 @@ namespace API.Services
                     UserId = userId,
                     UsageDate = today,
                     QuestionCount = 1,
-                    MaxQuestionsPerDay = 10,
+                    MaxQuestionsPerDay = 25,
                     CreatedAt = DateTime.UtcNow
                 };
 
