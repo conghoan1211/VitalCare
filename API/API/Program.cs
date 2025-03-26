@@ -197,7 +197,7 @@ app.Use(async (context, next) =>
     if (context.Response.StatusCode == 403)
     {
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền sử dụng tính năng của admin\"}");
+        await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền sử dụng tính năng này\"}");
     }
 });
 app.MapControllers();
