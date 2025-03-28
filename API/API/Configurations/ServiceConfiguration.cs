@@ -1,5 +1,6 @@
 ﻿using Amazon.S3;
 using API.Models;
+using API.RabbitMQ;
 using API.Services;
 using InstagramClone.Utilities;
 using Microsoft.AspNetCore.Authentication;
@@ -34,8 +35,8 @@ namespace API.Configurations
             services.AddScoped<IChatbotService, ChatbotService>();
             services.AddHttpClient<IChatbotService, ChatbotService>();
             services.AddHttpClient<IVideoService, VideoService>();
-
-
+            services.AddScoped<IVideoService, VideoService>();
+            services.AddScoped<IDashboardService, DashboardService>();
 
         }
     }

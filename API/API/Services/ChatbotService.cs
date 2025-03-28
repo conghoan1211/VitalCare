@@ -66,9 +66,9 @@ namespace API.Services
             // Nếu chưa có tin nhắn từ AI (tức là lần đầu mở), thêm 4 prompt hệ thống
             //if (!hasAIResponse)
             //{
-                chatHistory.Add(new { role = "model", parts = new[] { new { text = InitialSystemPrompt } } });
-                chatHistory.Add(new { role = "model", parts = new[] { new { text = SecondarySystemPrompt } } });
-                chatHistory.Add(new { role = "model", parts = new[] { new { text = StrictScopePrompt } } });
+            chatHistory.Add(new { role = "model", parts = new[] { new { text = InitialSystemPrompt } } });
+            chatHistory.Add(new { role = "model", parts = new[] { new { text = SecondarySystemPrompt } } });
+            chatHistory.Add(new { role = "model", parts = new[] { new { text = StrictScopePrompt } } });
             //}
 
             // Lấy danh sách tin nhắn của cuộc hội thoại
