@@ -35,6 +35,8 @@ namespace API.Configurations
             services.AddScoped<IChatbotService, ChatbotService>();
             services.AddHttpClient<IChatbotService, ChatbotService>();
             services.AddHttpClient<IVideoService, VideoService>();
+            services.AddScoped<IVideoService, VideoService>();
+            services.AddScoped<IDashboardService, DashboardService>();
 
             //RabbitMQ
             services.AddSingleton<OrderProducer>();

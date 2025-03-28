@@ -66,7 +66,11 @@ namespace API.Services
                         {
                             throw new Exception($"Sản phẩm {product.ProductID} không tồn tại.");
                         }
-
+                        // 🔴 Kiểm tra nếu stock không đủ
+                        if (productData.Stock < product.Quantity)
+                        {
+                            throw new Exception($"Sản phẩm {product.Title} chỉ còn {productData.Stock} trong kho, không đủ để đặt hàng.");
+                        }
                         var orderDetail = new OrderDetail
                         {
                             DetailId = Guid.NewGuid().ToString(),
@@ -89,9 +93,7 @@ namespace API.Services
                         _context.Products.Update(productData);
                         await _context.OrderDetails.AddAsync(orderDetail);
                     }
-
                     await _context.SaveChangesAsync();
-
 
                     // 👉 Cập nhật profile người dùng sau khi đặt hàng thành công
                     var updatedProfile = new UpdateProfileModels
@@ -105,7 +107,6 @@ namespace API.Services
                         DistrictId = input.DistrictId,
                         ProvinceName = input.ProvinceName,
                         DistrictName = input.DistrictName,
-                        // Sex, Dob có thể để null nếu không truyền từ input
                     };
 
                     await _profileService.UpdateProfile(updatedProfile, _httpContextAccessor.HttpContext); // 👈 gọi service update profile
