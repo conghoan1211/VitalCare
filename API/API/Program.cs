@@ -1,5 +1,4 @@
 ﻿using API.Configurations;
-using API.RabbitMQ;
 using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
