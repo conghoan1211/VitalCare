@@ -68,9 +68,9 @@ namespace API.Services
             user.RoleId = roleId;
             user.UpdateAt = DateTime.UtcNow;
             user.UpdateUser = userId;
+
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
-
             return "";
         }
 

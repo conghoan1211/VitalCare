@@ -28,5 +28,8 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+**/Tests/
+**/*.Tests.*
+
 LICENSE
 README.md
